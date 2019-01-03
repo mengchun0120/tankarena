@@ -15,11 +15,10 @@ void main() {
 
     if(rotate) {
         vec2 delta = pos - rotateRef;
-        vec2 normalizedDirection = normalize(rotateDirection);
-        pos[0] = rotateRef[0] + delta[0] * normalizedDirection[0] -
-            delta[1] * normalizedDirection[1];
-        pos[1] = rotateRef[1] + delta[0] * normalizedDirection[1] +
-            delta[1] * normalizedDirection[0];
+        pos[0] = rotateRef[0] + delta[0] * rotateDirection[0] -
+            delta[1] * rotateDirection[1];
+        pos[1] = rotateRef[1] + delta[0] * rotateDirection[1] +
+            delta[1] * rotateDirection[0];
     }
 
     if(useObjRef) {

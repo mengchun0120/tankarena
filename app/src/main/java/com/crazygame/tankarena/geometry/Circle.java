@@ -5,12 +5,13 @@ import com.crazygame.tankarena.opengl.SimpleShaderProgram;
 public class Circle extends Polygon {
     public final float radius;
 
-    public Circle(float radius, int numPoints) {
-        super(genSideVertices(radius, numPoints));
+    public Circle(float radius, float centerX, float centerY, int numPoints) {
+        super(genSideVertices(radius, centerX, centerY, numPoints), centerX, centerY);
         this.radius = radius;
     }
 
-    private static float[] genSideVertices(float radius, int numPoints) {
+    private static float[] genSideVertices(float radius,float centerX, float centerY,
+                                           int numPoints) {
         final int numFloats = (numPoints + 1) * SimpleShaderProgram.POSITION_COMPONENT_COUNT;
         final float[] vertexData = new float[numFloats];
         int offset = 0;
@@ -19,8 +20,8 @@ public class Circle extends Polygon {
         float angle = 0f;
 
         for(int i = 0; i <= numPoints; ++i) {
-            vertexData[offset++] = radius * (float)Math.cos(angle);
-            vertexData[offset++] = radius * (float)Math.sin(angle);
+            vertexData[offset++] = centerX + radius * (float)Math.cos(angle);
+            vertexData[offset++] = centerY + radius * (float)Math.sin(angle);
             angle += angleDelta;
         }
 

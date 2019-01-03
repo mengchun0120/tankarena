@@ -4,11 +4,11 @@ import com.crazygame.tankarena.opengl.SimpleShaderProgram;
 import android.opengl.GLES20;
 
 public class Polygon extends Shape {
-    public Polygon(float[] sideVertices) {
+    public Polygon(float[] sideVertices, float centerX, float centerY) {
         super(sideVertices.length / SimpleShaderProgram.POSITION_COMPONENT_COUNT + 2);
         vertices.floatBuffer.position(0);
-        vertices.floatBuffer.put(0f);
-        vertices.floatBuffer.put(0f);
+        vertices.floatBuffer.put(centerX);
+        vertices.floatBuffer.put(centerY);
         vertices.floatBuffer.put(sideVertices);
         vertices.floatBuffer.put(sideVertices, 0, 2);
         vertices.bindData();

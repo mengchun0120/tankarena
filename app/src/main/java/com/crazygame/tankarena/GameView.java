@@ -7,6 +7,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import com.crazygame.tankarena.controllers.DriveWheel;
+import com.crazygame.tankarena.controllers.FireButton;
 import com.crazygame.tankarena.opengl.SimpleShaderProgram;
 import com.crazygame.tankarena.utils.TimeDeltaCalculator;
 
@@ -24,13 +25,17 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
     public final static int FINGER_UP = 2;
 
     private final Context context;
+
     private final float[] viewportSize = new float[SimpleShaderProgram.POSITION_COMPONENT_COUNT];
     private SimpleShaderProgram simpleShaderProgram;
+
     private boolean running;
+
     private final TouchEventHandlerPool touchEventHandlerPool =
             new TouchEventHandlerPool(100);
 
     private DriveWheel driveWheel;
+    private FireButton fireButton;
 
     TimeDeltaCalculator timeDeltaCalculator = new TimeDeltaCalculator(3);
 
@@ -58,6 +63,7 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
         simpleShaderProgram.setViewportSize(viewportSize, 0);
 
         driveWheel = new DriveWheel(180f, 180f);
+        fireButton = new FireButton(viewportSize[0] - 180f, 180f);
 
         timeDeltaCalculator.start();
 
@@ -74,6 +80,7 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         simpleShaderProgram.setViewportOrigin(null, 0);
         driveWheel.draw(simpleShaderProgram);
+        fireButton.draw(simpleShaderProgram);
     }
 
     @Override
@@ -135,6 +142,7 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
         @Override
         public void run() {
             driveWheel.onTouch(action, pointerId, x, y);
+            fireButton.onTouch(action, pointerId, x, y);
             touchEventHandlerPool.free(this);
         }
     }

@@ -9,7 +9,8 @@ public class Pie extends Shape {
     public final float startAngleInDegree;
     public final float endAngleInDegree;
 
-    public Pie(float radius, float startAngleInDegree, float endAngleInDegree, int numPoints) {
+    public Pie(float radius, float startAngleInDegree, float endAngleInDegree, float centerX,
+               float centerY, int numPoints) {
         super(numPoints + 1);
 
         this.radius = radius;
@@ -27,8 +28,8 @@ public class Pie extends Shape {
         int offset = 2;
 
         for(int i = 0; i < numPoints; ++i) {
-            vertexData[offset++] = radius * (float)Math.cos(angle);
-            vertexData[offset++] = radius * (float)Math.sin(angle);
+            vertexData[offset++] = centerX + radius * (float)Math.cos(angle);
+            vertexData[offset++] = centerY + radius * (float)Math.sin(angle);
             angle += angleDelta;
         }
 
