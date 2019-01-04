@@ -8,7 +8,6 @@ uniform vec2 rotateDirection;
 uniform vec2 viewportSize;
 
 attribute vec2 position;
-const vec2 displacement = vec2(1.0, 1.0);
 
 void main() {
     vec2 pos = position;
@@ -29,5 +28,5 @@ void main() {
         pos -= viewportOrigin;
     }
 
-    gl_Position = vec4(pos * 2.0 / viewportSize - displacement, 0.0, 1.0);
+    gl_Position = vec4(pos * 2.0 / viewportSize, 0.0, 1.0);
 }

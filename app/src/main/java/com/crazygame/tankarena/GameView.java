@@ -62,8 +62,10 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
 
         simpleShaderProgram.setViewportSize(viewportSize, 0);
 
-        driveWheel = new DriveWheel(180f, 180f);
-        fireButton = new FireButton(viewportSize[0] - 180f, 180f);
+        driveWheel = new DriveWheel(-viewportSize[0]/2f + 180f,
+                -viewportSize[1]/2f + 180f);
+        fireButton = new FireButton(viewportSize[0]/2f - 180f,
+                -viewportSize[1]/2f + 180f);
 
         timeDeltaCalculator.start();
 
@@ -90,8 +92,8 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
             case MotionEvent.ACTION_POINTER_DOWN: {
                 int pointerIdx = motionEvent.getActionIndex();
                 int pointerId = motionEvent.getPointerId(pointerIdx);
-                float x = motionEvent.getX(pointerIdx);
-                float y = viewportSize[1] - motionEvent.getY(pointerIdx);
+                float x = translateX(motionEvent.getX(pointerIdx));
+                float y = translateY(motionEvent.getY(pointerIdx));
                 queueEvent(touchEventHandlerPool.alloc(FINGER_DOWN, pointerId, x, y));
                 return true;
             }
@@ -100,8 +102,8 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
                 int count = motionEvent.getPointerCount();
                 for (int i = 0; i < count; ++i) {
                     int pointerId = motionEvent.getPointerId(i);
-                    float x = motionEvent.getX(i);
-                    float y = viewportSize[1] - motionEvent.getY(i);
+                    float x = translateX(motionEvent.getX(i));
+                    float y = translateY(motionEvent.getY(i));
                     queueEvent(touchEventHandlerPool.alloc(FINGER_MOVE, pointerId, x, y));
                 }
                 return true;
@@ -112,14 +114,22 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
             case MotionEvent.ACTION_CANCEL: {
                 int pointerIdx = motionEvent.getActionIndex();
                 int pointerId = motionEvent.getPointerId(pointerIdx);
-                float x = motionEvent.getX(pointerIdx);
-                float y = viewportSize[1] - motionEvent.getY(pointerIdx);
+                float x = translateX(motionEvent.getX(pointerIdx));
+                float y = translateY(motionEvent.getY(pointerIdx));
                 queueEvent(touchEventHandlerPool.alloc(FINGER_UP, pointerId, x, y));
                 return true;
             }
         }
 
         return false;
+    }
+
+    private float translateX(float x) {
+        return -viewportSize[0]/2f + x;
+    }
+
+    private float translateY(float y) {
+        return viewportSize[1]/2f - y;
     }
 
     @Override
