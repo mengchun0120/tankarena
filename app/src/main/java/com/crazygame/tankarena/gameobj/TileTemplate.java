@@ -21,8 +21,7 @@ public class TileTemplate {
 
     public void draw(SimpleShaderProgram simpleShaderProgram, float[] position) {
         simpleShaderProgram.setObjRef(position, 0);
-        simpleShaderProgram.setRotate(null, 0, null,
-                0);
+        simpleShaderProgram.setRotate(null, null);
         tile.draw(simpleShaderProgram, fillColor, borderColor, 1f);
     }
 }

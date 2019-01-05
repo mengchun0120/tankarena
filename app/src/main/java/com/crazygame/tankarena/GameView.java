@@ -3,11 +3,15 @@ package com.crazygame.tankarena;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 import com.crazygame.tankarena.controllers.DriveWheel;
 import com.crazygame.tankarena.controllers.FireButton;
+import com.crazygame.tankarena.gameobj.LeftPanel;
+import com.crazygame.tankarena.gameobj.Map;
+import com.crazygame.tankarena.gameobj.RightPanel;
 import com.crazygame.tankarena.opengl.SimpleShaderProgram;
 import com.crazygame.tankarena.utils.TimeDeltaCalculator;
 
@@ -26,7 +30,7 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
 
     private final Context context;
 
-    private final float[] viewportSize = new float[SimpleShaderProgram.POSITION_COMPONENT_COUNT];
+    public final float[] viewportSize = new float[SimpleShaderProgram.POSITION_COMPONENT_COUNT];
     private SimpleShaderProgram simpleShaderProgram;
 
     private boolean running;
@@ -36,6 +40,9 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
 
     private DriveWheel driveWheel;
     private FireButton fireButton;
+    public Map map;
+    private LeftPanel leftPanel;
+    private RightPanel rightPanel;
 
     TimeDeltaCalculator timeDeltaCalculator = new TimeDeltaCalculator(3);
 
@@ -46,6 +53,8 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
 
         viewportSize[0] = width;
         viewportSize[1] = height;
+
+        Log.d("map", "w=" + width + " h=" + height);
 
         setEGLContextClientVersion(2);
         setRenderer(this);
@@ -60,12 +69,19 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
         simpleShaderProgram = new SimpleShaderProgram(context);
         simpleShaderProgram.useProgram();
 
-        simpleShaderProgram.setViewportSize(viewportSize, 0);
+        simpleShaderProgram.setViewportSize(viewportSize);
 
         driveWheel = new DriveWheel(-viewportSize[0]/2f + 180f,
                 -viewportSize[1]/2f + 180f);
         fireButton = new FireButton(viewportSize[0]/2f - 180f,
                 -viewportSize[1]/2f + 180f);
+        map = new Map(this, R.raw.map1);
+
+        float panelWidth = (viewportSize[0] - map.width) / 2f;
+        leftPanel = new LeftPanel(-(map.width + panelWidth) / 2f, 0f, panelWidth,
+                viewportSize[1]);
+        rightPanel = new RightPanel((map.width + panelWidth) / 2f, 0f, panelWidth,
+                viewportSize[1]);
 
         timeDeltaCalculator.start();
 
@@ -80,7 +96,12 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
     @Override
     public void onDrawFrame(GL10 gl10) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-        simpleShaderProgram.setViewportOrigin(null, 0);
+
+        map.draw(simpleShaderProgram);
+
+        simpleShaderProgram.setViewportOrigin(null, null);
+        leftPanel.draw(simpleShaderProgram);
+        rightPanel.draw(simpleShaderProgram);
         driveWheel.draw(simpleShaderProgram);
         fireButton.draw(simpleShaderProgram);
     }

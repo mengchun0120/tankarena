@@ -1,4 +1,5 @@
 uniform bool relativeToViewportOrigin;
+uniform vec2 screenCenter;
 uniform vec2 viewportOrigin;
 uniform bool useObjRef;
 uniform vec2 objRef;
@@ -25,7 +26,7 @@ void main() {
     }
 
     if(relativeToViewportOrigin) {
-        pos -= viewportOrigin;
+        pos -= (viewportOrigin + screenCenter);
     }
 
     gl_Position = vec4(pos * 2.0 / viewportSize, 0.0, 1.0);

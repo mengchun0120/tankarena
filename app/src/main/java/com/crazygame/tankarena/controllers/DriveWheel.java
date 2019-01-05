@@ -80,8 +80,7 @@ public class DriveWheel {
 
     public void draw(SimpleShaderProgram simpleShaderProgram) {
         simpleShaderProgram.setObjRef(center, 0);
-        simpleShaderProgram.setRotate(null, 0, null,
-                0);
+        simpleShaderProgram.setRotate(null, null);
         for(int i = 0; i < 4; ++i) {
             pies[i].draw(simpleShaderProgram, direction == i ? pressedPieColor : normalPieColor,
                     borderColor, 1.0f);

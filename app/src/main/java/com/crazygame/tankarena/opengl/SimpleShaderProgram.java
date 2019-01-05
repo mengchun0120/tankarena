@@ -12,6 +12,7 @@ public class SimpleShaderProgram extends ShaderProgram {
 
     public final int relativeToViewportOriginLocation;
     public final int viewportOriginLocation;
+    public final int screenCenterLocation;
     public final int useObjRefLocation;
     public final int objRefLocation;
     public final int rotateLocation;
@@ -27,6 +28,7 @@ public class SimpleShaderProgram extends ShaderProgram {
         relativeToViewportOriginLocation = GLES20.glGetUniformLocation(program,
                 "relativeToViewportOrigin");
         viewportOriginLocation = GLES20.glGetUniformLocation(program, "viewportOrigin");
+        screenCenterLocation = GLES20.glGetUniformLocation(program, "screenCenter");
         useObjRefLocation = GLES20.glGetUniformLocation(program, "useObjRef");
         objRefLocation = GLES20.glGetUniformLocation(program, "objRef");
         rotateLocation = GLES20.glGetUniformLocation(program, "rotate");
@@ -37,10 +39,11 @@ public class SimpleShaderProgram extends ShaderProgram {
         positionLocation = GLES20.glGetAttribLocation(program, "position");
     }
 
-    public void setViewportOrigin(float[] viewportOrigin, int offset) {
+    public void setViewportOrigin(float[] viewportOrigin, float[] screenCenter) {
         GLES20.glUniform1i(relativeToViewportOriginLocation, viewportOrigin != null ? 1 : 0);
         if(viewportOrigin != null) {
-            GLES20.glUniform2fv(viewportOriginLocation, 1, viewportOrigin, offset);
+            GLES20.glUniform2fv(viewportOriginLocation, 1, viewportOrigin, 0);
+            GLES20.glUniform2fv(screenCenterLocation, 1, screenCenter, 0);
         }
     }
 
@@ -51,17 +54,15 @@ public class SimpleShaderProgram extends ShaderProgram {
         }
     }
 
-    public void setRotate(float[] rotateRef, int rotateRefOffset, float[] rotateDirection,
-                          int rotateDirectionOffset) {
+    public void setRotate(float[] rotateRef, float[] rotateDirection) {
         GLES20.glUniform1i(rotateLocation, rotateRef != null ? 1 : 0);
         if(rotateRef != null) {
-            GLES20.glUniform2fv(rotateRefLocation, 1, rotateRef, rotateRefOffset);
-            GLES20.glUniform2fv(rotateDirectionLocation, 1, rotateDirection,
-                    rotateDirectionOffset);
+            GLES20.glUniform2fv(rotateRefLocation, 1, rotateRef, 0);
+            GLES20.glUniform2fv(rotateDirectionLocation, 1, rotateDirection, 0);
         }
     }
 
-    public void setViewportSize(float[] viewportSize, int offset) {
+    public void setViewportSize(float[] viewportSize) {
         GLES20.glUniform2fv(viewportSizeLocation, 1, viewportSize, 0);
     }
 

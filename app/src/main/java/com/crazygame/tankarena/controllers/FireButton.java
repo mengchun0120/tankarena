@@ -29,8 +29,7 @@ public class FireButton {
 
     public void draw(SimpleShaderProgram simpleShaderProgram) {
         simpleShaderProgram.setObjRef(center, 0);
-        simpleShaderProgram.setRotate(null, 0, null,
-                0);
+        simpleShaderProgram.setRotate(null, null);
         button.draw(simpleShaderProgram, firing ? pressedColor : normalColor, borderColor,
                 1f);
     }
