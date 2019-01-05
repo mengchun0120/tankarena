@@ -174,6 +174,7 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
         public void run() {
             driveWheel.onTouch(action, pointerId, x, y);
             fireButton.onTouch(action, pointerId, x, y);
+            map.updatePlayer(driveWheel.direction, fireButton.firing);
             touchEventHandlerPool.free(this);
         }
     }
@@ -188,7 +189,7 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
         }
 
         public synchronized TouchEventHandler alloc(int action, int pointerId, float x, float y) {
-            TouchEventHandler handler = null;
+            TouchEventHandler handler;
             if (firstAvailHandler != null) {
                 handler = firstAvailHandler;
                 handler.action = action;

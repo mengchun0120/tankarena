@@ -29,7 +29,7 @@ public class DriveWheel {
     private final float radius = 150f;
     private final Triangle[] arrows = new Triangle[4];
     private final Pie[] pies = new Pie[4];
-    private int direction = NOT_MOVE;
+    public int direction = NOT_MOVE;
     private int curPointerId = -1;
 
     public DriveWheel(float centerX, float centerY) {
@@ -89,10 +89,6 @@ public class DriveWheel {
         for(int i = 0; i < 4; ++i) {
             arrows[i].draw(simpleShaderProgram, arrowFillColor, borderColor, 1.0f);
         }
-    }
-
-    public int getDirection() {
-        return direction;
     }
 
     public void onTouch(int action, int pointerId, float x, float y) {

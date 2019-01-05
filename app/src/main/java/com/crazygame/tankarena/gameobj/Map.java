@@ -24,6 +24,7 @@ public class Map {
     private final GameView gameView;
     private final float[] viewportOrigin = {0f, 0f};
     private final float[] screenCenter = new float[SimpleShaderProgram.POSITION_COMPONENT_COUNT];
+    private Tank player;
 
     public Map(GameView gameView, int resourceId) {
         this.gameView = gameView;
@@ -62,6 +63,11 @@ public class Map {
                     float y = Float.parseFloat(tokenizer.nextToken());
 
                     Tank tank = new Tank(side, direction, x, y);
+
+                    if(side == 0) {
+                        player = tank;
+                    }
+
                     addObject(tank);
                 }
             }
@@ -89,6 +95,11 @@ public class Map {
                 }
             }
         }
+    }
+
+    public void updatePlayer(int direction, boolean firing) {
+        player.setDirection(direction);
+        player.firing = firing;
     }
 
     public void addObject(GameObject obj) {

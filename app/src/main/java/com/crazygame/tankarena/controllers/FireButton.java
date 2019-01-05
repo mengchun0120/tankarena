@@ -17,7 +17,7 @@ public class FireButton {
 
     private final float radius = 150f;
     private final float[] center = new float[SimpleShaderProgram.POSITION_COMPONENT_COUNT];
-    private boolean firing = false;
+    public boolean firing = false;
     private Circle button;
     private int curPointerId = -1;
 
