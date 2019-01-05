@@ -41,7 +41,6 @@ public class Map {
 
             screenCenter[0] = width / 2f;
             screenCenter[1] = gameView.viewportSize[1] / 2f;
-            Log.d("map", "s0=" + screenCenter[0] + " s1=" + screenCenter[1]);
 
             items = new MapItem[numBlocksY][numBlocksX];
 
@@ -52,9 +51,18 @@ public class Map {
                 if(type.equals("tile")) {
                     float x = Float.parseFloat(tokenizer.nextToken());
                     float y = Float.parseFloat(tokenizer.nextToken());
+
                     Tile tile = new Tile(x, y);
-                    Log.d("map", "t=" + (x-viewportOrigin[0]-screenCenter[0]));
                     addObject(tile);
+
+                } else if(type.equals("tank")) {
+                    int side = Integer.parseInt(tokenizer.nextToken());
+                    int direction = Integer.parseInt(tokenizer.nextToken());
+                    float x = Float.parseFloat(tokenizer.nextToken());
+                    float y = Float.parseFloat(tokenizer.nextToken());
+
+                    Tank tank = new Tank(side, direction, x, y);
+                    addObject(tank);
                 }
             }
 
