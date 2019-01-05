@@ -2,7 +2,7 @@ package com.crazygame.tankarena.gameobj;
 
 public class MapItem {
     public GameObject gameObject;
-    public MapItem next, prev;
+    public MapItem next;
 
     public MapItem(GameObject gameObject) {
         this.gameObject = gameObject;
@@ -10,6 +10,6 @@ public class MapItem {
 
     public void reset(GameObject gameObject) {
         this.gameObject = gameObject;
-        prev = next = null;
+        next = null;
     }
 }

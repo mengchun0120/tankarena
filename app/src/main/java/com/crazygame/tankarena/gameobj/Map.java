@@ -1,12 +1,10 @@
 package com.crazygame.tankarena.gameobj;
 
-import android.content.Context;
 import android.util.Log;
 
 import com.crazygame.tankarena.GameView;
 import com.crazygame.tankarena.opengl.SimpleShaderProgram;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +12,7 @@ import java.io.InputStreamReader;
 import java.util.StringTokenizer;
 
 public class Map {
-    private final float blockBreath = 100f;
+    public final float blockBreath = 100f;
     private final int numBlocksX = 12;
     private final int numBlocksY;
     public final float width = numBlocksX * blockBreath;
@@ -24,6 +22,7 @@ public class Map {
     private final GameView gameView;
     private final float[] viewportOrigin = {0f, 0f};
     private final float[] screenCenter = new float[SimpleShaderProgram.POSITION_COMPONENT_COUNT];
+    private final float maxViewportOriginY;
     private Tank player;
 
     public Map(GameView gameView, int resourceId) {
@@ -39,6 +38,7 @@ public class Map {
 
             numBlocksY = Integer.parseInt(tokenizer.nextToken());
             height = numBlocksY * blockBreath;
+            maxViewportOriginY = height - gameView.viewportSize[1];
 
             screenCenter[0] = width / 2f;
             screenCenter[1] = gameView.viewportSize[1] / 2f;
@@ -80,17 +80,17 @@ public class Map {
     public void draw(SimpleShaderProgram simpleShaderProgram) {
         simpleShaderProgram.setViewportOrigin(viewportOrigin, screenCenter);
 
-        int startRow = (int)Math.floor(viewportOrigin[1] / blockBreath);
-        int endRow = (int)Math.floor((viewportOrigin[1] + gameView.viewportSize[1]) / blockBreath);
+        int startRow = getRow(viewportOrigin[1]);
+        int endRow = crampRow(getRow(viewportOrigin[1] + gameView.viewportSize[1]));
 
-        clearForDraw(startRow, endRow);
+        clearFlags(startRow, endRow);
         for(int row = startRow; row <= endRow; ++row) {
             for(int col = 0; col < numBlocksX; ++col) {
                 for(MapItem item = items[row][col]; item != null; item = item.next) {
                     GameObject obj = item.gameObject;
-                    if(!obj.drawn) {
+                    if(!obj.flag) {
                         obj.draw(simpleShaderProgram);
-                        obj.drawn = true;
+                        obj.flag = true;
                     }
                 }
             }
@@ -102,11 +102,16 @@ public class Map {
         player.firing = firing;
     }
 
+    public void update(float timeDelta) {
+        player.update(this, timeDelta);
+        updateViewportOrigin();
+    }
+
     public void addObject(GameObject obj) {
-        int startRow = crampRow((int)Math.floor(obj.bottomBound() / blockBreath));
-        int endRow = crampRow((int)Math.floor(obj.topBound() / blockBreath));
-        int startCol = crampCol((int)Math.floor(obj.leftBound() / blockBreath));
-        int endCol = crampCol((int)Math.floor(obj.rightBound() / blockBreath));
+        int startRow = crampRow(getRow(obj.bottomBound()));
+        int endRow = crampRow(getRow(obj.topBound()));
+        int startCol = crampCol(getCol(obj.leftBound()));
+        int endCol = crampCol(getCol(obj.rightBound()));
 
         for(int row = startRow; row <= endRow; ++row) {
             for(int col = startCol; col <= endCol; ++col) {
@@ -119,6 +124,34 @@ public class Map {
         MapItem item = mapItemPool.alloc(obj);
         item.next = items[row][col];
         items[row][col] = item;
+    }
+
+    public void removeObject(GameObject obj, int row, int col) {
+        MapItem prev = null, item;
+
+        for(item = items[row][col]; item != null; item = item.next) {
+            if(item.gameObject == obj) {
+                break;
+            }
+            prev = item;
+        }
+
+        if(item != null) {
+            if(prev != null) {
+                prev.next = item.next;
+            } else {
+                items[row][col] = item.next;
+            }
+            mapItemPool.free(item);
+        }
+    }
+
+    public int getRow(float y) {
+        return (int)Math.floor(y / blockBreath);
+    }
+
+    public int getCol(float x) {
+        return (int)Math.floor(x / blockBreath);
     }
 
     public int crampRow(int row) {
@@ -145,13 +178,23 @@ public class Map {
         return col;
     }
 
-    private void clearForDraw(int startRow, int endRow) {
+    private void clearFlags(int startRow, int endRow) {
         for(int row = startRow; row <= endRow; ++row) {
             for(int col = 0; col < numBlocksX; ++col) {
                 for(MapItem item = items[row][col]; item != null; item = item.next) {
-                    item.gameObject.drawn = false;
+                    item.gameObject.flag = false;
                 }
             }
         }
+    }
+
+    private void updateViewportOrigin() {
+        float newViewportY = player.position[1] - gameView.viewportSize[1]/2f;
+        if(newViewportY < 0f) {
+            newViewportY = 0f;
+        } else if(newViewportY > maxViewportOriginY) {
+            newViewportY = maxViewportOriginY;
+        }
+        viewportOrigin[1] = newViewportY;
     }
 }

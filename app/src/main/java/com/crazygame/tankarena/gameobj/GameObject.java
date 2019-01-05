@@ -4,7 +4,7 @@ import com.crazygame.tankarena.opengl.SimpleShaderProgram;
 
 public abstract class GameObject {
     public final float[] position = new float[SimpleShaderProgram.POSITION_COMPONENT_COUNT];
-    public boolean drawn = false;
+    public boolean flag = false;
 
     public abstract void draw(SimpleShaderProgram simpleShaderProgram);
 

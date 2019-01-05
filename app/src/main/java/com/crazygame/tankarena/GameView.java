@@ -54,8 +54,6 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
         viewportSize[0] = width;
         viewportSize[1] = height;
 
-        Log.d("map", "w=" + width + " h=" + height);
-
         setEGLContextClientVersion(2);
         setRenderer(this);
     }
@@ -96,6 +94,10 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
     @Override
     public void onDrawFrame(GL10 gl10) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+
+        float timeDelta = timeDeltaCalculator.curTimeDelta();
+
+        map.update(timeDelta);
 
         map.draw(simpleShaderProgram);
 
