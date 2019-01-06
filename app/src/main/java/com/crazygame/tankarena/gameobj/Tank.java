@@ -1,6 +1,9 @@
 package com.crazygame.tankarena.gameobj;
 
+import android.util.Log;
+
 import com.crazygame.tankarena.controllers.DriveWheel;
+import com.crazygame.tankarena.data.Constants;
 import com.crazygame.tankarena.opengl.SimpleShaderProgram;
 
 public class Tank extends GameObject {
@@ -43,6 +46,26 @@ public class Tank extends GameObject {
         return position[1] - template.halfBreath;
     }
 
+    @Override
+    public float leftCollisionBound() {
+        return position[0] - template.halfBreath;
+    }
+
+    @Override
+    public float rightCollisionBound() {
+        return position[0] + template.halfBreath;
+    }
+
+    @Override
+    public float topCollisionBound() {
+        return position[1] + template.halfBreath;
+    }
+
+    @Override
+    public float bottomCollisionBound() {
+        return position[1] - template.halfBreath;
+    }
+
     public void setDirection(int direction) {
         if(direction == DriveWheel.NOT_MOVE) {
             moving = false;
@@ -61,41 +84,20 @@ public class Tank extends GameObject {
     private void move(Map map, float timeDelta) {
         final float moveDistance = moveSpeed * timeDelta;
 
-        final int oldStartRow = map.crampRow(map.getRow(bottomBound()));
-        final int oldEndRow = map.crampRow(map.getRow(topBound()));
-        final int oldStartCol = map.crampCol(map.getCol(leftBound()));
-        final int oldEndCol = map.crampCol(map.getCol(rightBound()));
+        MapRegion oldRegion = MapRegion.regionPool[0];
+        getMapRegion(map, oldRegion);
 
-        final float newX = crampX(map,
+        position[0] = crampX(map,
                 position[0] + moveDistance * template.rotateDirection[direction][0]);
-        final float newY = crampY(map,
+        position[1] = crampY(map,
                 position[1] + moveDistance * template.rotateDirection[direction][1]);
 
-        final int newStartRow = map.crampRow(map.getRow(newY - template.halfBreath));
-        final int newEndRow = map.crampRow(map.getRow(newY + template.halfBreath));
-        final int newStartCol = map.crampCol(map.getCol(newX - template.halfBreath));
-        final int newEndCol = map.crampCol(map.getCol(newX + template.halfBreath));
+        MapRegion newRegion = MapRegion.regionPool[1];
+        getMapRegion(map, newRegion);
 
-        for(int row = oldStartRow; row <= oldEndRow; ++row) {
-            for(int col = oldStartCol; col <= oldEndCol; ++col) {
-                if(row < newStartRow || row > newEndRow || col < newStartCol
-                        || col > newEndCol) {
-                    map.removeObject(this, row, col);
-                }
-            }
-        }
+        checkCollision(map, newRegion);
 
-        for(int row = newStartRow; row <= newEndRow; ++row) {
-            for(int col = newStartCol; col <= newEndCol; ++col) {
-                if(row < oldStartRow || row > oldEndRow || col < oldStartCol
-                        || col > oldEndCol) {
-                    map.addObject(this, row, col);
-                }
-            }
-        }
-
-        position[0] = newX;
-        position[1] = newY;
+        map.move(this, oldRegion, newRegion);
     }
 
     private float crampX(Map map, float x) {
@@ -122,5 +124,74 @@ public class Tank extends GameObject {
         }
 
         return y;
+    }
+
+    private void getMapRegion(Map map, MapRegion region) {
+        region.update(map, leftBound(), rightBound(), topBound(), bottomBound());
+    }
+
+    private void checkCollision(Map map, MapRegion region) {
+        boolean collide = false;
+        float maxAdjustY = -1e9f, maxAdjustX = -1e9f;
+        
+        map.clearFlags(region.startRow, region.endRow, region.startCol, region.endCol);
+        for(int row = region.startRow; row <= region.endRow; ++row) {
+            for(int col = region.startCol; col <= region.endCol; ++col) {
+                for(MapItem item = map.items[row][col]; item != null; item = item.next) {
+                    GameObject obj = item.gameObject;
+                    if(obj.flag || obj == this) {
+                        continue;
+                    }
+
+                    if((obj instanceof Tank) || (obj instanceof Tile)) {
+                        float leftAdjustX = obj.rightCollisionBound() - leftCollisionBound();
+                        float rightAdjustX = rightCollisionBound() - obj.leftCollisionBound();
+                        float downAdjustY = obj.topCollisionBound() - bottomCollisionBound();
+                        float upAdjustY =  topCollisionBound() - obj.bottomCollisionBound();
+
+                        if(leftAdjustX > Constants.CLOSE_TO_ZERO &&
+                           rightAdjustX > Constants.CLOSE_TO_ZERO &&
+                           downAdjustY > Constants.CLOSE_TO_ZERO &&
+                           upAdjustY > Constants.CLOSE_TO_ZERO) {
+                            collide = true;
+
+                            float directionX = template.rotateDirection[direction][0];
+                            float adjustX;
+                            if(directionX > 0f) {
+                                adjustX = rightAdjustX;
+                            } else if(directionX < 0f) {
+                                adjustX = leftAdjustX;
+                            } else {
+                                adjustX = 0f;
+                            }
+
+                            if(adjustX > maxAdjustX) {
+                                maxAdjustX = adjustX;
+                            }
+
+                            float directionY = template.rotateDirection[direction][1];
+                            float adjustY;
+                            if(directionY > 0f) {
+                                adjustY = upAdjustY;
+                            } else if(directionY < 0f) {
+                                adjustY = downAdjustY;
+                            } else {
+                                adjustY = 0f;
+                            }
+
+                            if(adjustY > maxAdjustY) {
+                                maxAdjustY = adjustY;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if(collide) {
+            position[0] -= template.rotateDirection[direction][0] * maxAdjustX;
+            position[1] -= template.rotateDirection[direction][1] * maxAdjustY;
+            getMapRegion(map, region);
+        }
     }
 }

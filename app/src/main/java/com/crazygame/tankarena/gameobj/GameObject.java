@@ -15,4 +15,12 @@ public abstract class GameObject {
     public abstract float topBound();
 
     public abstract float bottomBound();
+
+    public abstract float leftCollisionBound();
+
+    public abstract float rightCollisionBound();
+
+    public abstract float topCollisionBound();
+
+    public abstract float bottomCollisionBound();
 }

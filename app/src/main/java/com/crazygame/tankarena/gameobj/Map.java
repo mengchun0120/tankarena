@@ -17,7 +17,7 @@ public class Map {
     private final int numBlocksY;
     public final float width = numBlocksX * blockBreath;
     public final float height;
-    private final MapItem[][] items;
+    public final MapItem[][] items;
     private final MapItemPool mapItemPool = new MapItemPool(1000);
     private final GameView gameView;
     private final float[] viewportOrigin = {0f, 0f};
@@ -83,7 +83,7 @@ public class Map {
         int startRow = getRow(viewportOrigin[1]);
         int endRow = crampRow(getRow(viewportOrigin[1] + gameView.viewportSize[1]));
 
-        clearFlags(startRow, endRow);
+        clearFlags(startRow, endRow, 0, numBlocksX-1);
         for(int row = startRow; row <= endRow; ++row) {
             for(int col = 0; col < numBlocksX; ++col) {
                 for(MapItem item = items[row][col]; item != null; item = item.next) {
@@ -97,6 +97,24 @@ public class Map {
         }
     }
 
+    public void move(GameObject obj, MapRegion oldRegion, MapRegion newRegion) {
+        for(int row = oldRegion.startRow; row <= oldRegion.endRow; ++row) {
+            for(int col = oldRegion.startCol; col <= oldRegion.endCol; ++col) {
+                if(!newRegion.covered(row, col)) {
+                    removeObject(obj, row, col);
+                }
+            }
+        }
+
+        for(int row = newRegion.startRow; row <= newRegion.endRow; ++row) {
+            for(int col = newRegion.startCol; col <= newRegion.endCol; ++col) {
+                if(!oldRegion.covered(row, col)) {
+                    addObject(obj, row, col);
+                }
+            }
+        }
+    }
+
     public void updatePlayer(int direction, boolean firing) {
         player.setDirection(direction);
         player.firing = firing;
@@ -105,6 +123,26 @@ public class Map {
     public void update(float timeDelta) {
         player.update(this, timeDelta);
         updateViewportOrigin();
+
+
+        int startRow = getRow(viewportOrigin[1]);
+        int endRow = crampRow(getRow(viewportOrigin[1] + gameView.viewportSize[1]));
+
+        clearFlags(startRow, endRow, 0, numBlocksX-1);
+        for(int row = startRow; row <= endRow; ++row) {
+            for(int col = 0; col < numBlocksX; ++col) {
+                for(MapItem item = items[row][col]; item != null; item = item.next) {
+                    GameObject obj = item.gameObject;
+                    if(!obj.flag && obj != player) {
+                        if(obj instanceof Tank) {
+                            Tank tank = (Tank)obj;
+                            tank.update(this, timeDelta);
+                        }
+                        obj.flag = true;
+                    }
+                }
+            }
+        }
     }
 
     public void addObject(GameObject obj) {
@@ -178,9 +216,9 @@ public class Map {
         return col;
     }
 
-    private void clearFlags(int startRow, int endRow) {
+    public void clearFlags(int startRow, int endRow, int startCol, int endCol) {
         for(int row = startRow; row <= endRow; ++row) {
-            for(int col = 0; col < numBlocksX; ++col) {
+            for(int col = startCol; col <= endCol; ++col) {
                 for(MapItem item = items[row][col]; item != null; item = item.next) {
                     item.gameObject.flag = false;
                 }

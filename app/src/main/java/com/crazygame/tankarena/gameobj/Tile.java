@@ -34,4 +34,24 @@ public class Tile extends GameObject {
     public float bottomBound() {
         return position[1] - template.halfBreath;
     }
+
+    @Override
+    public float leftCollisionBound() {
+        return position[0] - template.halfBreath;
+    }
+
+    @Override
+    public float rightCollisionBound() {
+        return position[0] + template.halfBreath;
+    }
+
+    @Override
+    public float topCollisionBound() {
+        return position[1] + template.halfBreath;
+    }
+
+    @Override
+    public float bottomCollisionBound() {
+        return position[1] - template.halfBreath;
+    }
 }
