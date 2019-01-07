@@ -13,6 +13,7 @@ public class Tank extends GameObject {
     private int side;
     public boolean firing = false;
     private float moveSpeed = 200f;
+    private float timeSinceLastFire = 0f;
 
     public Tank(int side, int direction, float x, float y) {
         this.side = side;
@@ -24,6 +25,7 @@ public class Tank extends GameObject {
     @Override
     public void draw(SimpleShaderProgram simpleShaderProgram) {
         template.draw(simpleShaderProgram, side, position, direction);
+        flag |= FLAG_DRAWN;
     }
 
     @Override
@@ -76,9 +78,19 @@ public class Tank extends GameObject {
     }
 
     public void update(Map map, float timeDelta) {
+        if(firing) {
+            timeSinceLastFire += timeDelta;
+            if(timeSinceLastFire > template.fireSpeed[side]) {
+                fire(map);
+                timeSinceLastFire = 0f;
+            }
+        }
+
         if(moving) {
             move(map, timeDelta);
         }
+
+        flag |= FLAG_UPDATED;
     }
 
     private void move(Map map, float timeDelta) {
@@ -98,6 +110,18 @@ public class Tank extends GameObject {
         checkCollision(map, newRegion);
 
         map.move(this, oldRegion, newRegion);
+    }
+
+    public void fire(Map map) {
+        float directionX = template.rotateDirection[direction][0];
+        float directionY = template.rotateDirection[direction][1];
+        float bulletX = position[0] + template.firingPoint[0] * directionX -
+                template.firingPoint[1] * directionY;
+        float bulletY = position[1] + template.firingPoint[0] * directionY +
+                template.firingPoint[1] * directionX;
+
+        Bullet bullet = new Bullet(side, bulletX, bulletY, directionX, directionY);
+        map.addObject(bullet);
     }
 
     private float crampX(Map map, float x) {
@@ -139,7 +163,7 @@ public class Tank extends GameObject {
             for(int col = region.startCol; col <= region.endCol; ++col) {
                 for(MapItem item = map.items[row][col]; item != null; item = item.next) {
                     GameObject obj = item.gameObject;
-                    if(obj.flag || obj == this) {
+                    if((obj.flag & FLAG_UPDATED) != 0 || obj == this) {
                         continue;
                     }
 

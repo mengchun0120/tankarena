@@ -88,9 +88,8 @@ public class Map {
             for(int col = 0; col < numBlocksX; ++col) {
                 for(MapItem item = items[row][col]; item != null; item = item.next) {
                     GameObject obj = item.gameObject;
-                    if(!obj.flag) {
+                    if((obj.flag & GameObject.FLAG_DRAWN) == 0) {
                         obj.draw(simpleShaderProgram);
-                        obj.flag = true;
                     }
                 }
             }
@@ -124,21 +123,38 @@ public class Map {
         player.update(this, timeDelta);
         updateViewportOrigin();
 
-
         int startRow = getRow(viewportOrigin[1]);
         int endRow = crampRow(getRow(viewportOrigin[1] + gameView.viewportSize[1]));
 
         clearFlags(startRow, endRow, 0, numBlocksX-1);
         for(int row = startRow; row <= endRow; ++row) {
             for(int col = 0; col < numBlocksX; ++col) {
-                for(MapItem item = items[row][col]; item != null; item = item.next) {
+                MapItem prev = null, item = items[row][col];
+                while(item != null) {
                     GameObject obj = item.gameObject;
-                    if(!obj.flag && obj != player) {
-                        if(obj instanceof Tank) {
-                            Tank tank = (Tank)obj;
+                    if ((obj.flag & GameObject.FLAG_UPDATED) == 0 && obj != player) {
+                        if (obj instanceof Tank) {
+                            Tank tank = (Tank) obj;
                             tank.update(this, timeDelta);
+                        } else if (obj instanceof Bullet) {
+                            Bullet bullet = (Bullet) obj;
+                            bullet.update(this, timeDelta);
                         }
-                        obj.flag = true;
+                    }
+
+                    if((obj.flag & GameObject.FLAG_DELETED) != 0) {
+                        if(prev != null) {
+                            prev.next = item.next;
+                        } else {
+                            items[row][col] = item.next;
+                        }
+
+                        MapItem next = item.next;
+                        mapItemPool.free(item);
+                        item = next;
+                    } else {
+                        prev = item;
+                        item = item.next;
                     }
                 }
             }
@@ -220,7 +236,7 @@ public class Map {
         for(int row = startRow; row <= endRow; ++row) {
             for(int col = startCol; col <= endCol; ++col) {
                 for(MapItem item = items[row][col]; item != null; item = item.next) {
-                    item.gameObject.flag = false;
+                    item.gameObject.flag = 0;
                 }
             }
         }

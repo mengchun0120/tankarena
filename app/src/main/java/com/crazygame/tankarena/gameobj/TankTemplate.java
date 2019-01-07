@@ -35,6 +35,10 @@ public class TankTemplate {
             {1f, 0f}
     };
 
+    public final float[] fireSpeed = {
+            0.2f, 1.0f
+    };
+
     private final float[] rotateRef = {0f, 0f};
 
     public final Rectangle base;
@@ -43,6 +47,7 @@ public class TankTemplate {
 
     public final float breath = 100f;
     public final float halfBreath = breath / 2f;
+    public final float[] firingPoint = {halfBreath, 0f};
 
     public TankTemplate() {
         base = new Rectangle(breath, breath, 0f, 0f);
