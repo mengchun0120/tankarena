@@ -27,15 +27,7 @@ public class Bullet extends GameObject {
 
             flag |= FLAG_DELETED;
         } else {
-            MapRegion oldRegion = MapRegion.regionPool[0];
-            oldRegion.update(map, leftBound(), rightBound(), topBound(), bottomBound());
 
-            MapRegion newRegion = MapRegion.regionPool[1];
-            newRegion.update(map, position[0] - template.radius,
-                    position[0] + template.radius, position[1] + template.radius,
-                    position[1] - template.radius);
-
-            map.move(this, oldRegion, newRegion);
         }
 
         flag |= FLAG_UPDATED;

@@ -5,7 +5,8 @@ import com.crazygame.tankarena.opengl.SimpleShaderProgram;
 public abstract class GameObject {
     public final static int FLAG_UPDATED = 0x00000001;
     public final static int FLAG_DELETED = 0x00000002;
-    public final static int FLAG_DRAWN =   0x00000004;
+    public final static int FLAG_DRAWN   = 0x00000004;
+    public final static int FLAG_CHECKED = 0x00000008;
 
     public final float[] position = new float[SimpleShaderProgram.POSITION_COMPONENT_COUNT];
     public int flag = 0;

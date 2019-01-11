@@ -96,20 +96,25 @@ public class Tank extends GameObject {
     private void move(Map map, float timeDelta) {
         final float moveDistance = moveSpeed * timeDelta;
 
-        MapRegion oldRegion = MapRegion.regionPool[0];
-        getMapRegion(map, oldRegion);
-
+        final int oldBottomRow = map.crampRow(map.getRow(bottomBound()));
+        final int oldTopRow = map.crampRow(map.getRow(topBound()));
+        final int oldLeftCol = map.crampCol(map.getCol(leftBound()));
+        final int oldRightCol = map.crampCol(map.getCol(rightBound()));
+        
         position[0] = crampX(map,
                 position[0] + moveDistance * template.rotateDirection[direction][0]);
         position[1] = crampY(map,
                 position[1] + moveDistance * template.rotateDirection[direction][1]);
 
-        MapRegion newRegion = MapRegion.regionPool[1];
-        getMapRegion(map, newRegion);
+        checkCollisionAndAdjustPosition(map);
 
-        checkCollision(map, newRegion);
+        final int newBottomRow = map.crampRow(map.getRow(bottomBound()));
+        final int newTopRow = map.crampRow(map.getRow(topBound()));
+        final int newLeftCol = map.crampCol(map.getCol(leftBound()));
+        final int newRightCol = map.crampCol(map.getCol(rightBound()));
 
-        map.move(this, oldRegion, newRegion);
+        map.move(this, oldBottomRow, oldTopRow, oldLeftCol, oldRightCol, newBottomRow,
+                newTopRow, newLeftCol, newRightCol);
     }
 
     public void fire(Map map) {
@@ -150,72 +155,65 @@ public class Tank extends GameObject {
         return y;
     }
 
-    private void getMapRegion(Map map, MapRegion region) {
-        region.update(map, leftBound(), rightBound(), topBound(), bottomBound());
-    }
-
-    private void checkCollision(Map map, MapRegion region) {
-        boolean collide = false;
-        float maxAdjustY = -1e9f, maxAdjustX = -1e9f;
+    private void checkCollisionAndAdjustPosition(Map map) {
+        int bottomRow = map.crampRow(map.getRow(bottomCollisionBound()));
+        int topRow = map.crampRow(map.getRow(topCollisionBound()));
+        int leftCol = map.crampCol(map.getCol(leftCollisionBound()));
+        int rightCol = map.crampCol(map.getCol(rightCollisionBound()));
         
-        map.clearFlags(region.startRow, region.endRow, region.startCol, region.endCol);
-        for(int row = region.startRow; row <= region.endRow; ++row) {
-            for(int col = region.startCol; col <= region.endCol; ++col) {
+        map.clearFlags(bottomRow, topRow, leftCol, rightCol, ~GameObject.FLAG_CHECKED);
+        for(int row = bottomRow; row <= topRow; ++row) {
+            for(int col = leftCol; col <= rightCol; ++col) {
                 for(MapItem item = map.items[row][col]; item != null; item = item.next) {
                     GameObject obj = item.gameObject;
-                    if((obj.flag & FLAG_UPDATED) != 0 || obj == this) {
+
+                    if((obj.flag & FLAG_CHECKED) != 0 || obj == this) {
                         continue;
                     }
 
                     if((obj instanceof Tank) || (obj instanceof Tile)) {
-                        float leftAdjustX = obj.rightCollisionBound() - leftCollisionBound();
-                        float rightAdjustX = rightCollisionBound() - obj.leftCollisionBound();
-                        float downAdjustY = obj.topCollisionBound() - bottomCollisionBound();
-                        float upAdjustY =  topCollisionBound() - obj.bottomCollisionBound();
-
-                        if(leftAdjustX > Constants.CLOSE_TO_ZERO &&
-                           rightAdjustX > Constants.CLOSE_TO_ZERO &&
-                           downAdjustY > Constants.CLOSE_TO_ZERO &&
-                           upAdjustY > Constants.CLOSE_TO_ZERO) {
-                            collide = true;
-
-                            float directionX = template.rotateDirection[direction][0];
-                            float adjustX;
-                            if(directionX > 0f) {
-                                adjustX = rightAdjustX;
-                            } else if(directionX < 0f) {
-                                adjustX = leftAdjustX;
-                            } else {
-                                adjustX = 0f;
-                            }
-
-                            if(adjustX > maxAdjustX) {
-                                maxAdjustX = adjustX;
-                            }
-
-                            float directionY = template.rotateDirection[direction][1];
-                            float adjustY;
-                            if(directionY > 0f) {
-                                adjustY = upAdjustY;
-                            } else if(directionY < 0f) {
-                                adjustY = downAdjustY;
-                            } else {
-                                adjustY = 0f;
-                            }
-
-                            if(adjustY > maxAdjustY) {
-                                maxAdjustY = adjustY;
-                            }
-                        }
+                        adjustPosition(obj);
                     }
+
+                    obj.flag |= GameObject.FLAG_CHECKED;
                 }
             }
         }
+    }
 
-        if(collide) {
-            position[0] -= template.rotateDirection[direction][0] * maxAdjustX;
-            position[1] -= template.rotateDirection[direction][1] * maxAdjustY;
-            getMapRegion(map, region);
+    private void adjustPosition(GameObject obj) {
+        float leftAdjustX = obj.rightCollisionBound() - leftCollisionBound();
+        float rightAdjustX = rightCollisionBound() - obj.leftCollisionBound();
+        float downAdjustY = obj.topCollisionBound() - bottomCollisionBound();
+        float upAdjustY =  topCollisionBound() - obj.bottomCollisionBound();
+
+        if(leftAdjustX <= Constants.CLOSE_TO_ZERO || rightAdjustX <= Constants.CLOSE_TO_ZERO ||
+           downAdjustY > Constants.CLOSE_TO_ZERO || upAdjustY > Constants.CLOSE_TO_ZERO) {
+            return;
         }
+
+        float directionX = template.rotateDirection[direction][0];
+        float directionY = template.rotateDirection[direction][1];
+
+        float adjustX;
+        if (directionX > 0f) {
+            adjustX = rightAdjustX;
+        } else if (directionX < 0f) {
+            adjustX = leftAdjustX;
+        } else {
+            adjustX = 0f;
+        }
+
+        float adjustY;
+        if (directionY > 0f) {
+            adjustY = upAdjustY;
+        } else if (directionY < 0f) {
+            adjustY = downAdjustY;
+        } else {
+            adjustY = 0f;
+        }
+
+        position[0] -= directionX * adjustX;
+        position[1] -= directionY * adjustY;
     }
 }

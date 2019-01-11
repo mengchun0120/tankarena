@@ -83,7 +83,7 @@ public class Map {
         int startRow = getRow(viewportOrigin[1]);
         int endRow = crampRow(getRow(viewportOrigin[1] + gameView.viewportSize[1]));
 
-        clearFlags(startRow, endRow, 0, numBlocksX-1);
+        clearFlags(startRow, endRow, 0, numBlocksX-1, 0);
         for(int row = startRow; row <= endRow; ++row) {
             for(int col = 0; col < numBlocksX; ++col) {
                 for(MapItem item = items[row][col]; item != null; item = item.next) {
@@ -96,22 +96,15 @@ public class Map {
         }
     }
 
-    public void move(GameObject obj, MapRegion oldRegion, MapRegion newRegion) {
-        for(int row = oldRegion.startRow; row <= oldRegion.endRow; ++row) {
-            for(int col = oldRegion.startCol; col <= oldRegion.endCol; ++col) {
-                if(!newRegion.covered(row, col)) {
-                    removeObject(obj, row, col);
-                }
-            }
-        }
+    public void move(GameObject obj, int oldBottomRow, int oldTopRow, int oldLeftCol,
+                     int oldRightCol, int newBottomRow, int newTopRow, int newLeftCol,
+                     int newRightCol) {
 
-        for(int row = newRegion.startRow; row <= newRegion.endRow; ++row) {
-            for(int col = newRegion.startCol; col <= newRegion.endCol; ++col) {
-                if(!oldRegion.covered(row, col)) {
-                    addObject(obj, row, col);
-                }
-            }
-        }
+        removeObjectFromOldRegion(obj, oldBottomRow, oldTopRow, oldLeftCol, oldRightCol,
+                newBottomRow, newTopRow, newLeftCol, newRightCol);
+
+        addObjectToNewRegion(obj, oldBottomRow, oldTopRow, oldLeftCol, oldRightCol,
+                newBottomRow, newTopRow, newLeftCol, newRightCol);
     }
 
     public void updatePlayer(int direction, boolean firing) {
@@ -123,37 +116,31 @@ public class Map {
         player.update(this, timeDelta);
         updateViewportOrigin();
 
-        int startRow = getRow(viewportOrigin[1]);
-        int endRow = crampRow(getRow(viewportOrigin[1] + gameView.viewportSize[1]));
+        int bottomRow = getRow(viewportOrigin[1]);
+        int topRow = crampRow(getRow(viewportOrigin[1] + gameView.viewportSize[1]));
 
-        clearFlags(startRow, endRow, 0, numBlocksX-1);
-        for(int row = startRow; row <= endRow; ++row) {
+        clearFlags(bottomRow, topRow, 0, numBlocksX-1, 0);
+        for(int row = bottomRow; row <= topRow; ++row) {
             for(int col = 0; col < numBlocksX; ++col) {
-                MapItem prev = null, item = items[row][col];
+                MapItem item = items[row][col];
                 while(item != null) {
                     GameObject obj = item.gameObject;
+
                     if ((obj.flag & GameObject.FLAG_UPDATED) == 0 && obj != player) {
                         if (obj instanceof Tank) {
                             Tank tank = (Tank) obj;
                             tank.update(this, timeDelta);
-                        } else if (obj instanceof Bullet) {
+                        } else if(obj instanceof Bullet) {
                             Bullet bullet = (Bullet) obj;
                             bullet.update(this, timeDelta);
                         }
                     }
 
                     if((obj.flag & GameObject.FLAG_DELETED) != 0) {
-                        if(prev != null) {
-                            prev.next = item.next;
-                        } else {
-                            items[row][col] = item.next;
-                        }
-
                         MapItem next = item.next;
-                        mapItemPool.free(item);
+                        removeObject(obj);
                         item = next;
                     } else {
-                        prev = item;
                         item = item.next;
                     }
                 }
@@ -200,6 +187,19 @@ public class Map {
         }
     }
 
+    public void removeObject(GameObject obj) {
+        int bottomRow = crampRow(getRow(obj.bottomBound()));
+        int topRow = crampRow(getRow(obj.topBound()));
+        int leftCol = crampCol(getCol(obj.leftBound()));
+        int rightCol = crampCol(getCol(obj.rightBound()));
+
+        for(int row = bottomRow; row <= topRow; ++row) {
+            for(int col = leftCol; col <= rightCol; ++col) {
+                removeObject(obj, row, col);
+            }
+        }
+    }
+
     public int getRow(float y) {
         return (int)Math.floor(y / blockBreath);
     }
@@ -232,11 +232,11 @@ public class Map {
         return col;
     }
 
-    public void clearFlags(int startRow, int endRow, int startCol, int endCol) {
-        for(int row = startRow; row <= endRow; ++row) {
-            for(int col = startCol; col <= endCol; ++col) {
+    public void clearFlags(int bottomRow, int topRow, int leftCol, int rightCol, int flagMask) {
+        for(int row = bottomRow; row <= topRow; ++row) {
+            for(int col = leftCol; col <= rightCol; ++col) {
                 for(MapItem item = items[row][col]; item != null; item = item.next) {
-                    item.gameObject.flag = 0;
+                    item.gameObject.flag &= flagMask;
                 }
             }
         }
@@ -250,5 +250,36 @@ public class Map {
             newViewportY = maxViewportOriginY;
         }
         viewportOrigin[1] = newViewportY;
+    }
+
+    private void removeObjectFromOldRegion(GameObject obj, int oldBottomRow, int oldTopRow,
+                                     int oldLeftCol, int oldRightCol, int newBottomRow,
+                                     int newTopRow, int newLeftCol, int newRightCol) {
+
+        for(int row = oldBottomRow; row <= oldTopRow; ++row) {
+            for(int col = oldLeftCol; col <= oldRightCol; ++col) {
+                if(!coveredByRegion(row, col, newBottomRow, newTopRow, newLeftCol, newRightCol)) {
+                    removeObject(obj, row, col);
+                }
+            }
+        }
+    }
+
+    private void addObjectToNewRegion(GameObject obj, int oldBottomRow, int oldTopRow,
+                                     int oldLeftCol, int oldRightCol, int newBottomRow,
+                                     int newTopRow, int newLeftCol, int newRightCol) {
+
+        for(int row = newBottomRow; row <= newTopRow; ++row) {
+            for(int col = newLeftCol; col <= newRightCol; ++col) {
+                if(!coveredByRegion(row, col, oldBottomRow, oldTopRow, oldLeftCol, oldRightCol)) {
+                    addObject(obj, row, col);
+                }
+            }
+        }
+    }
+
+    private boolean coveredByRegion(int row, int col, int bottomRow, int topRow,
+                                         int leftCol, int rightCol) {
+        return row >= bottomRow && row <= topRow && col >= leftCol && col <= rightCol;
     }
 }
