@@ -188,7 +188,7 @@ public class Tank extends GameObject {
         float upAdjustY =  topCollisionBound() - obj.bottomCollisionBound();
 
         if(leftAdjustX <= Constants.CLOSE_TO_ZERO || rightAdjustX <= Constants.CLOSE_TO_ZERO ||
-           downAdjustY > Constants.CLOSE_TO_ZERO || upAdjustY > Constants.CLOSE_TO_ZERO) {
+           downAdjustY <= Constants.CLOSE_TO_ZERO || upAdjustY <= Constants.CLOSE_TO_ZERO) {
             return;
         }
 
