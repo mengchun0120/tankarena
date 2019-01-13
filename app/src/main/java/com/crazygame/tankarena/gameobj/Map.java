@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.crazygame.tankarena.GameView;
 import com.crazygame.tankarena.opengl.SimpleShaderProgram;
+import com.crazygame.tankarena.utils.FileLog;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,6 +25,10 @@ public class Map {
     private final float[] screenCenter = new float[SimpleShaderProgram.POSITION_COMPONENT_COUNT];
     private final float maxViewportOriginY;
     private Tank player;
+    private StringBuilder builder = new StringBuilder();
+    private long count = 0;
+    private MapItem curItem;
+    private boolean curItemRemoved;
 
     public Map(GameView gameView, int resourceId) {
         this.gameView = gameView;
@@ -122,9 +127,11 @@ public class Map {
         clearFlags(bottomRow, topRow, 0, numBlocksX-1, 0);
         for(int row = bottomRow; row <= topRow; ++row) {
             for(int col = 0; col < numBlocksX; ++col) {
-                MapItem item = items[row][col];
-                while(item != null) {
-                    GameObject obj = item.gameObject;
+                curItemRemoved = false;
+                curItem = items[row][col];
+
+                while(curItem != null) {
+                    GameObject obj = curItem.gameObject;
 
                     if ((obj.flag & GameObject.FLAG_UPDATED) == 0 && obj != player) {
                         if (obj instanceof Tank) {
@@ -136,27 +143,63 @@ public class Map {
                         }
                     }
 
-                    if((obj.flag & GameObject.FLAG_DELETED) != 0) {
-                        MapItem next = item.next;
-                        removeObject(obj);
-                        item = next;
+                    if(curItemRemoved) {
+                        MapItem prev = null, item;
+
+                        for(item = items[row][col]; item != curItem; item = item.next) {
+                            prev = item;
+                        }
+
+                        if(prev != null) {
+                            prev.next = item.next;
+                        } else {
+                            items[row][col] = item.next;
+                        }
+
+                        curItem = item.next;
+                        curItemRemoved = false;
+
+                        mapItemPool.free(item);
                     } else {
-                        item = item.next;
+                        curItem = curItem.next;
                     }
                 }
             }
         }
     }
 
-    public void addObject(GameObject obj) {
-        int startRow = crampRow(getRow(obj.bottomBound()));
-        int endRow = crampRow(getRow(obj.topBound()));
-        int startCol = crampCol(getCol(obj.leftBound()));
-        int endCol = crampCol(getCol(obj.rightBound()));
+    public String getObjectStr(int row, int col) {
+        builder.delete(0, builder.length());
+        builder.append(row);
+        builder.append(" ");
+        builder.append(col);
+        for(MapItem i = items[row][col]; i != null; i = i.next) {
+            builder.append(" " + i.idStr + ":" + i.gameObject.idStr);
+        }
+        return builder.toString();
+    }
 
-        for(int row = startRow; row <= endRow; ++row) {
-            for(int col = startCol; col <= endCol; ++col) {
-                addObject(obj, row, col);
+    public void logAllMap() {
+        for(int row = 0; row < numBlocksY; ++row) {
+            for(int col = 0; col < numBlocksX; ++col) {
+                if(items[row][col] != null) {
+                    FileLog.log("    " + getObjectStr(row, col));
+                }
+            }
+        }
+    }
+
+    public void addObject(GameObject obj) {
+        final int bottomRow = crampRow(getRow(obj.bottomBound()));
+        final int topRow = crampRow(getRow(obj.topBound()));
+        final int leftCol = crampCol(getCol(obj.leftBound()));
+        final int rightCol = crampCol(getCol(obj.rightBound()));
+
+        for(int row = bottomRow; row <= topRow; ++row) {
+            for(int col = leftCol; col <= rightCol; ++col) {
+                MapItem item = mapItemPool.alloc(obj);
+                item.next = items[row][col];
+                items[row][col] = item;
             }
         }
     }
@@ -178,21 +221,25 @@ public class Map {
         }
 
         if(item != null) {
-            if(prev != null) {
-                prev.next = item.next;
+            if(item != curItem) {
+                if (prev != null) {
+                    prev.next = item.next;
+                } else {
+                    items[row][col] = item.next;
+                }
+                mapItemPool.free(item);
             } else {
-                items[row][col] = item.next;
+                curItemRemoved = true;
             }
-            mapItemPool.free(item);
         }
     }
 
     public void removeObject(GameObject obj) {
-        int bottomRow = crampRow(getRow(obj.bottomBound()));
-        int topRow = crampRow(getRow(obj.topBound()));
-        int leftCol = crampCol(getCol(obj.leftBound()));
-        int rightCol = crampCol(getCol(obj.rightBound()));
+        removeObject(obj, crampRow(getRow(obj.bottomBound())), crampRow(getRow(obj.topBound())),
+                crampCol(getCol(obj.leftBound())), crampCol(getCol(obj.rightBound())));
+    }
 
+    public void removeObject(GameObject obj, int bottomRow, int topRow, int leftCol, int rightCol) {
         for(int row = bottomRow; row <= topRow; ++row) {
             for(int col = leftCol; col <= rightCol; ++col) {
                 removeObject(obj, row, col);

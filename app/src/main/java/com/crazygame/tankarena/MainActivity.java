@@ -1,20 +1,32 @@
 package com.crazygame.tankarena;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.ConfigurationInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.widget.Toast;
 
+import com.crazygame.tankarena.utils.FileLog;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+
 public class MainActivity extends Activity {
     private GameView gameView;
     private Point size = new Point();
+    public FileLog logger;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -29,6 +41,8 @@ public class MainActivity extends Activity {
                     Toast.LENGTH_LONG).show();
             return;
         }
+
+        FileLog.initLogger(this);
     }
 
     private boolean checkOpenGL() {

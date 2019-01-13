@@ -4,10 +4,17 @@ import com.crazygame.tankarena.opengl.SimpleShaderProgram;
 
 public class Tile extends GameObject {
     private static TileTemplate template = new TileTemplate();
+    private static int count = 0;
 
     public Tile(float x, float y) {
+        super("i" + (count++));
         position[0] = x;
         position[1] = y;
+    }
+
+    @Override
+    public String toString() {
+        return idStr;
     }
 
     @Override

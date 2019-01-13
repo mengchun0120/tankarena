@@ -14,8 +14,10 @@ public class Tank extends GameObject {
     public boolean firing = false;
     private float moveSpeed = 200f;
     private float timeSinceLastFire = 0f;
+    public static int count = 0;
 
     public Tank(int side, int direction, float x, float y) {
+        super("t" +(count++));
         this.side = side;
         this.direction = direction;
         position[0] = x;

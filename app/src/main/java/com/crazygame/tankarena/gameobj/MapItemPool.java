@@ -6,14 +6,15 @@ public class MapItemPool {
     private MapItem firstAvailable;
 
     public MapItemPool(int maxSize) {
+        firstAvailable = null;
         this.maxSize = maxSize;
     }
 
     public MapItem alloc(GameObject gameObject) {
         if(firstAvailable != null) {
             MapItem item = firstAvailable;
-            item.reset(gameObject);
             firstAvailable = firstAvailable.next;
+            item.reset(gameObject);
             --count;
             return item;
         }
@@ -22,11 +23,12 @@ public class MapItemPool {
     }
 
     public void free(MapItem item) {
+        item.reset(null);
+
         if(count >= maxSize) {
             return;
         }
 
-        item.reset(null);
         item.next = firstAvailable;
         firstAvailable = item;
         ++count;

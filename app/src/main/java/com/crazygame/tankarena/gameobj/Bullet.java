@@ -2,14 +2,18 @@ package com.crazygame.tankarena.gameobj;
 
 import com.crazygame.tankarena.data.Constants;
 import com.crazygame.tankarena.opengl.SimpleShaderProgram;
+import com.crazygame.tankarena.utils.FileLog;
 
 public class Bullet extends GameObject {
     public final static BulletTemplate template = new BulletTemplate();
 
     public final int side;
     public final float[] direction = new float[SimpleShaderProgram.POSITION_COMPONENT_COUNT];
+    private static int count = 0;
+
 
     public Bullet(int side, float x, float y, float directionX, float directionY) {
+        super("b" + (count++));
         this.side = side;
         position[0] = x;
         position[1] = y;
@@ -18,6 +22,9 @@ public class Bullet extends GameObject {
     }
 
     public void update(Map map, float timeDelta) {
+        final float oldX = position[0];
+        final float oldY = position[1];
+
         final float moveDistance = template.speed[side] * timeDelta;
         final int oldBottomRow = map.crampRow(map.getRow(bottomBound()));
         final int oldTopRow = map.crampRow(map.getRow(topBound()));
@@ -36,7 +43,7 @@ public class Bullet extends GameObject {
                 newTopRow, newLeftCol, newRightCol);
 
         if(outofBound(map) || checkCollision(map)) {
-            flag |= FLAG_DELETED;
+            map.removeObject(this, newBottomRow, newTopRow, newLeftCol, newRightCol);
         }
 
         flag |= FLAG_UPDATED;
