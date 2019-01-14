@@ -6,6 +6,8 @@ import com.crazygame.tankarena.controllers.DriveWheel;
 import com.crazygame.tankarena.data.Constants;
 import com.crazygame.tankarena.opengl.SimpleShaderProgram;
 
+import java.util.Random;
+
 public class Tank extends GameObject {
     public final static TankTemplate template = new TankTemplate();
     private int direction;
@@ -17,6 +19,7 @@ public class Tank extends GameObject {
     private float timeLastUI = 0f;
     public static int count = 0;
     public int health = 10;
+    private Random random = new Random();
 
     public Tank(int side, int direction, float x, float y) {
         super("t" +(count++));
@@ -276,12 +279,18 @@ public class Tank extends GameObject {
         float absDeltaY = Math.abs(deltaY);
         float targetBoundary = template.halfBreath + Bullet.template.radius;
 
+        if(absDeltaX < targetBoundary || absDeltaY < targetBoundary) {
+
+        } else {
+
+        }
+
         if(absDeltaX >= absDeltaY) {
             if(absDeltaY < targetBoundary) {
                 firing = true;
                 direction = deltaX >= 0 ? DriveWheel.RIGHT : DriveWheel.LEFT;
                 moving = false;
-            } else if(deltaY >= -targetBoundary) {
+            } else if(deltaY <= -targetBoundary) {
                 firing = false;
                 direction = DriveWheel.DOWN;
                 moving = true;
@@ -295,7 +304,7 @@ public class Tank extends GameObject {
                 firing = true;
                 direction = deltaY >= 0 ? DriveWheel.UP : DriveWheel.DOWN;
                 moving = false;
-            } else if(deltaX >= -targetBoundary) {
+            } else if(deltaX <= -targetBoundary) {
                 firing = false;
                 direction = DriveWheel.LEFT;
                 moving = true;

@@ -46,9 +46,9 @@ public class Bullet extends GameObject {
 
         if(outOfBound(map) || checkCollision(map)) {
             map.removeObject(this, newBottomRow, newTopRow, newLeftCol, newRightCol);
+        } else {
+            flag |= FLAG_UPDATED;
         }
-
-        flag |= FLAG_UPDATED;
     }
 
     @Override
@@ -102,7 +102,7 @@ public class Bullet extends GameObject {
     }
 
     private boolean outOfBound(Map map) {
-        return position[0] <= -template.radius ||
+        return position[0] <= map.viewportOrigin[1] - template.radius ||
                position[0] >= map.width + template.radius ||
                position[1] <= -template.radius ||
                position[1] >= map.viewportOrigin[1] + map.gameView.viewportSize[1] +
