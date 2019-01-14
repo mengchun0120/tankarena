@@ -102,8 +102,11 @@ public class Bullet extends GameObject {
     }
 
     private boolean outOfBound(Map map) {
-        return position[0] <= -template.radius || position[0] >= map.width + template.radius ||
-               position[1] <= -template.radius || position[1] >= map.height + template.radius;
+        return position[0] <= -template.radius ||
+               position[0] >= map.width + template.radius ||
+               position[1] <= -template.radius ||
+               position[1] >= map.viewportOrigin[1] + map.gameView.viewportSize[1] +
+                              template.radius;
     }
 
     private boolean checkCollision(Map map) {

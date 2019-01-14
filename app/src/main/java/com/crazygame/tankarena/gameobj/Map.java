@@ -22,8 +22,8 @@ public class Map {
     private final MapItemPool mapItemPool = new MapItemPool(1000);
     private final MapItemToDeletePool itemToDeletePool = new MapItemToDeletePool(500);
     private MapItemToDelete firstItemToDelete = null;
-    private final GameView gameView;
-    private final float[] viewportOrigin = {0f, 0f};
+    public final GameView gameView;
+    public final float[] viewportOrigin = {0f, 0f};
     private final float[] screenCenter = new float[SimpleShaderProgram.POSITION_COMPONENT_COUNT];
     private final float maxViewportOriginY;
     private Tank player;
@@ -123,8 +123,8 @@ public class Map {
         player.update(this, timeDelta);
         updateViewportOrigin();
 
-        int bottomRow = getRow(viewportOrigin[1]);
-        int topRow = crampRow(getRow(viewportOrigin[1] + gameView.viewportSize[1]));
+        int bottomRow = crampRow(getRow(viewportOrigin[1] - blockBreath));
+        int topRow = crampRow(getRow(viewportOrigin[1] + gameView.viewportSize[1] + blockBreath));
 
         clearFlags(bottomRow, topRow, 0, numBlocksX-1, 0);
         for(int row = bottomRow; row <= topRow; ++row) {
