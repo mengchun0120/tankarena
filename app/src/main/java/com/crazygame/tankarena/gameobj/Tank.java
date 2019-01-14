@@ -14,6 +14,7 @@ public class Tank extends GameObject {
     public boolean firing = false;
     private float moveSpeed = 200f;
     private float timeSinceLastFire = 0f;
+    private float timeLastUI = 0f;
     public static int count = 0;
     public int health = 10;
 
@@ -81,6 +82,14 @@ public class Tank extends GameObject {
     }
 
     public void update(Map map, float timeDelta) {
+        if(side == 1) {
+            timeLastUI += timeDelta;
+            if(timeLastUI > 0.5f) {
+                runAI(map);
+                timeLastUI = 0f;
+            }
+        }
+
         if(firing) {
             timeSinceLastFire += timeDelta;
             if(timeSinceLastFire > template.fireSpeed[side]) {
@@ -258,5 +267,43 @@ public class Tank extends GameObject {
                 (rightCollisionBound() - obj.leftCollisionBound()) > 0 &&
                 (obj.topCollisionBound() - bottomCollisionBound()) > 0 &&
                 (topCollisionBound() - obj.bottomCollisionBound()) > 0;
+    }
+
+    private void runAI(Map map) {
+        float deltaX = map.player.position[0] - position[0];
+        float deltaY = map.player.position[1] - position[1];
+        float absDeltaX = Math.abs(deltaX);
+        float absDeltaY = Math.abs(deltaY);
+        float targetBoundary = template.halfBreath + Bullet.template.radius;
+
+        if(absDeltaX >= absDeltaY) {
+            if(absDeltaY < targetBoundary) {
+                firing = true;
+                direction = deltaX >= 0 ? DriveWheel.RIGHT : DriveWheel.LEFT;
+                moving = false;
+            } else if(deltaY >= -targetBoundary) {
+                firing = false;
+                direction = DriveWheel.DOWN;
+                moving = true;
+            } else {
+                firing = false;
+                direction = DriveWheel.UP;
+                moving = true;
+            }
+        } else {
+            if(absDeltaX < targetBoundary) {
+                firing = true;
+                direction = deltaY >= 0 ? DriveWheel.UP : DriveWheel.DOWN;
+                moving = false;
+            } else if(deltaX >= -targetBoundary) {
+                firing = false;
+                direction = DriveWheel.LEFT;
+                moving = true;
+            } else {
+                firing = false;
+                direction = DriveWheel.RIGHT;
+                moving = true;
+            }
+        }
     }
 }

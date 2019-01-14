@@ -26,7 +26,7 @@ public class Map {
     public final float[] viewportOrigin = {0f, 0f};
     private final float[] screenCenter = new float[SimpleShaderProgram.POSITION_COMPONENT_COUNT];
     private final float maxViewportOriginY;
-    private Tank player;
+    public Tank player;
     private StringBuilder builder = new StringBuilder();
     private long count = 0;
 
