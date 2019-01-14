@@ -20,6 +20,8 @@ public class Map {
     public final float height;
     public final MapItem[][] items;
     private final MapItemPool mapItemPool = new MapItemPool(1000);
+    private final MapItemToDeletePool itemToDeletePool = new MapItemToDeletePool(500);
+    private MapItemToDelete firstItemToDelete = null;
     private final GameView gameView;
     private final float[] viewportOrigin = {0f, 0f};
     private final float[] screenCenter = new float[SimpleShaderProgram.POSITION_COMPONENT_COUNT];
@@ -27,8 +29,6 @@ public class Map {
     private Tank player;
     private StringBuilder builder = new StringBuilder();
     private long count = 0;
-    private MapItem curItem;
-    private boolean curItemRemoved;
 
     public Map(GameView gameView, int resourceId) {
         this.gameView = gameView;
@@ -93,7 +93,7 @@ public class Map {
             for(int col = 0; col < numBlocksX; ++col) {
                 for(MapItem item = items[row][col]; item != null; item = item.next) {
                     GameObject obj = item.gameObject;
-                    if((obj.flag & GameObject.FLAG_DRAWN) == 0) {
+                    if(obj != null && (obj.flag & GameObject.FLAG_DRAWN) == 0) {
                         obj.draw(simpleShaderProgram);
                     }
                 }
@@ -127,13 +127,9 @@ public class Map {
         clearFlags(bottomRow, topRow, 0, numBlocksX-1, 0);
         for(int row = bottomRow; row <= topRow; ++row) {
             for(int col = 0; col < numBlocksX; ++col) {
-                curItemRemoved = false;
-                curItem = items[row][col];
-
-                while(curItem != null) {
-                    GameObject obj = curItem.gameObject;
-
-                    if ((obj.flag & GameObject.FLAG_UPDATED) == 0 && obj != player) {
+                for(MapItem item = items[row][col]; item != null; item = item.next) {
+                    GameObject obj = item.gameObject;
+                    if (obj != null && (obj.flag & GameObject.FLAG_UPDATED) == 0 && obj != player) {
                         if (obj instanceof Tank) {
                             Tank tank = (Tank) obj;
                             tank.update(this, timeDelta);
@@ -142,30 +138,11 @@ public class Map {
                             bullet.update(this, timeDelta);
                         }
                     }
-
-                    if(curItemRemoved) {
-                        MapItem prev = null, item;
-
-                        for(item = items[row][col]; item != curItem; item = item.next) {
-                            prev = item;
-                        }
-
-                        if(prev != null) {
-                            prev.next = item.next;
-                        } else {
-                            items[row][col] = item.next;
-                        }
-
-                        curItem = item.next;
-                        curItemRemoved = false;
-
-                        mapItemPool.free(item);
-                    } else {
-                        curItem = curItem.next;
-                    }
                 }
             }
         }
+
+        deleteMapItems();
     }
 
     public String getObjectStr(int row, int col) {
@@ -197,9 +174,7 @@ public class Map {
 
         for(int row = bottomRow; row <= topRow; ++row) {
             for(int col = leftCol; col <= rightCol; ++col) {
-                MapItem item = mapItemPool.alloc(obj);
-                item.next = items[row][col];
-                items[row][col] = item;
+                addObject(obj, row, col);
             }
         }
     }
@@ -207,30 +182,26 @@ public class Map {
     public void addObject(GameObject obj, int row, int col) {
         MapItem item = mapItemPool.alloc(obj);
         item.next = items[row][col];
+        if(items[row][col] != null) {
+            items[row][col].prev = item;
+        }
         items[row][col] = item;
     }
 
     public void removeObject(GameObject obj, int row, int col) {
-        MapItem prev = null, item;
+        MapItem item;
 
         for(item = items[row][col]; item != null; item = item.next) {
             if(item.gameObject == obj) {
                 break;
             }
-            prev = item;
         }
 
         if(item != null) {
-            if(item != curItem) {
-                if (prev != null) {
-                    prev.next = item.next;
-                } else {
-                    items[row][col] = item.next;
-                }
-                mapItemPool.free(item);
-            } else {
-                curItemRemoved = true;
-            }
+            item.gameObject = null;
+            MapItemToDelete itemToDelete = itemToDeletePool.alloc(item, row, col);
+            itemToDelete.next = firstItemToDelete;
+            firstItemToDelete = itemToDelete;
         }
     }
 
@@ -283,7 +254,9 @@ public class Map {
         for(int row = bottomRow; row <= topRow; ++row) {
             for(int col = leftCol; col <= rightCol; ++col) {
                 for(MapItem item = items[row][col]; item != null; item = item.next) {
-                    item.gameObject.flag &= flagMask;
+                    if(item.gameObject != null) {
+                        item.gameObject.flag &= flagMask;
+                    }
                 }
             }
         }
@@ -328,5 +301,27 @@ public class Map {
     private boolean coveredByRegion(int row, int col, int bottomRow, int topRow,
                                          int leftCol, int rightCol) {
         return row >= bottomRow && row <= topRow && col >= leftCol && col <= rightCol;
+    }
+
+    private void deleteMapItems() {
+        while(firstItemToDelete != null) {
+            MapItemToDelete nextItemToDelete = firstItemToDelete.next;
+            MapItem item = firstItemToDelete.item;
+
+            if(item.prev != null) {
+                item.prev.next = item.next;
+            } else {
+                items[firstItemToDelete.row][firstItemToDelete.col] = item.next;
+            }
+
+            if(item.next != null) {
+                item.next.prev = item.prev;
+            }
+
+            mapItemPool.free(item);
+            itemToDeletePool.free(firstItemToDelete);
+
+            firstItemToDelete = nextItemToDelete;
+        }
     }
 }

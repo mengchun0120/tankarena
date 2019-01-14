@@ -1,5 +1,7 @@
 package com.crazygame.tankarena.gameobj;
 
+import android.util.Log;
+
 import com.crazygame.tankarena.data.Constants;
 import com.crazygame.tankarena.opengl.SimpleShaderProgram;
 import com.crazygame.tankarena.utils.FileLog;
@@ -11,7 +13,6 @@ public class Bullet extends GameObject {
     public final float[] direction = new float[SimpleShaderProgram.POSITION_COMPONENT_COUNT];
     private static int count = 0;
 
-
     public Bullet(int side, float x, float y, float directionX, float directionY) {
         super("b" + (count++));
         this.side = side;
@@ -22,10 +23,11 @@ public class Bullet extends GameObject {
     }
 
     public void update(Map map, float timeDelta) {
-        final float oldX = position[0];
-        final float oldY = position[1];
+        float moveDistance = template.speed[side] * timeDelta;
+        if(moveDistance >= Constants.MAX_MOVE_DISTANCE) {
+            moveDistance = Constants.MAX_MOVE_DISTANCE;
+        }
 
-        final float moveDistance = template.speed[side] * timeDelta;
         final int oldBottomRow = map.crampRow(map.getRow(bottomBound()));
         final int oldTopRow = map.crampRow(map.getRow(topBound()));
         final int oldLeftCol = map.crampCol(map.getCol(leftBound()));
@@ -42,7 +44,7 @@ public class Bullet extends GameObject {
         map.move(this, oldBottomRow, oldTopRow, oldLeftCol, oldRightCol, newBottomRow,
                 newTopRow, newLeftCol, newRightCol);
 
-        if(outofBound(map) || checkCollision(map)) {
+        if(outOfBound(map) || checkCollision(map)) {
             map.removeObject(this, newBottomRow, newTopRow, newLeftCol, newRightCol);
         }
 
@@ -95,7 +97,11 @@ public class Bullet extends GameObject {
         return position[1] - template.collisionRadius;
     }
 
-    private boolean outofBound(Map map) {
+    public int power() {
+        return template.power[side];
+    }
+
+    private boolean outOfBound(Map map) {
         return position[0] <= -template.radius || position[0] >= map.width + template.radius ||
                position[1] <= -template.radius || position[1] >= map.height + template.radius;
     }
@@ -113,13 +119,22 @@ public class Bullet extends GameObject {
                 for(MapItem item = map.items[row][col]; item != null; item = item.next) {
                     GameObject obj = item.gameObject;
 
-                    if((obj.flag & FLAG_CHECKED) != 0 || obj == this) {
+                    if(obj == null || (obj.flag & FLAG_CHECKED) != 0 || obj == this) {
                         continue;
                     }
 
                     if((obj instanceof Tank) || (obj instanceof Tile)) {
                         if(collideWith(obj)) {
                             collide = true;
+                            if(obj instanceof Tank) {
+                                Tank tank = (Tank)obj;
+                                if(tank.side != side) {
+                                    tank.health -= template.power[side];
+                                    if(tank.health <= 0) {
+                                        map.removeObject(tank);
+                                    }
+                                }
+                            }
                         }
                     }
 

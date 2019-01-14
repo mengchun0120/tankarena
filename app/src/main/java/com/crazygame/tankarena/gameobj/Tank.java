@@ -10,11 +10,12 @@ public class Tank extends GameObject {
     public final static TankTemplate template = new TankTemplate();
     private int direction;
     private boolean moving = false;
-    private int side;
+    public final int side;
     public boolean firing = false;
     private float moveSpeed = 200f;
     private float timeSinceLastFire = 0f;
     public static int count = 0;
+    public int health = 10;
 
     public Tank(int side, int direction, float x, float y) {
         super("t" +(count++));
@@ -96,7 +97,10 @@ public class Tank extends GameObject {
     }
 
     private void move(Map map, float timeDelta) {
-        final float moveDistance = moveSpeed * timeDelta;
+        float moveDistance = moveSpeed * timeDelta;
+        if(moveDistance >= Constants.MAX_MOVE_DISTANCE) {
+            moveDistance = Constants.MAX_MOVE_DISTANCE;
+        }
 
         final int oldBottomRow = map.crampRow(map.getRow(bottomBound()));
         final int oldTopRow = map.crampRow(map.getRow(topBound()));
@@ -169,7 +173,7 @@ public class Tank extends GameObject {
                 for(MapItem item = map.items[row][col]; item != null; item = item.next) {
                     GameObject obj = item.gameObject;
 
-                    if((obj.flag & FLAG_CHECKED) != 0 || obj == this) {
+                    if(obj == null || (obj.flag & FLAG_CHECKED) != 0 || obj == this) {
                         continue;
                     }
 
@@ -217,5 +221,35 @@ public class Tank extends GameObject {
 
         position[0] -= directionX * adjustX;
         position[1] -= directionY * adjustY;
+    }
+
+    private void checkBullet(Map map) {
+        int bottomRow = map.crampRow(map.getRow(bottomCollisionBound()));
+        int topRow = map.crampRow(map.getRow(topCollisionBound()));
+        int leftCol = map.crampCol(map.getCol(leftCollisionBound()));
+        int rightCol = map.crampCol(map.getCol(rightCollisionBound()));
+
+        map.clearFlags(bottomRow, topRow, leftCol, rightCol, ~GameObject.FLAG_CHECKED);
+        for(int row = bottomRow; row <= topRow; ++row) {
+            for(int col = leftCol; col <= rightCol; ++col) {
+                for(MapItem item = map.items[row][col]; item != null; item = item.next) {
+                    GameObject obj = item.gameObject;
+                    if(obj instanceof Bullet && collideWith(obj)) {
+                        Bullet bullet = (Bullet)obj;
+                        if(bullet.side != side) {
+                            health -= bullet.power();
+                            map.removeObject(bullet);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean collideWith(GameObject obj) {
+        return (obj.rightCollisionBound() - leftCollisionBound()) > 0 &&
+                (rightCollisionBound() - obj.leftCollisionBound()) > 0 &&
+                (obj.topCollisionBound() - bottomCollisionBound()) > 0 &&
+                (topCollisionBound() - obj.bottomCollisionBound()) > 0;
     }
 }
