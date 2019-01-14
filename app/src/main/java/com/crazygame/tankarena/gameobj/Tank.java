@@ -121,6 +121,8 @@ public class Tank extends GameObject {
 
         map.move(this, oldBottomRow, oldTopRow, oldLeftCol, oldRightCol, newBottomRow,
                 newTopRow, newLeftCol, newRightCol);
+
+        checkBullet(map);
     }
 
     public void fire(Map map) {
@@ -132,6 +134,7 @@ public class Tank extends GameObject {
                 template.firingPoint[1] * directionX;
 
         Bullet bullet = new Bullet(side, bulletX, bulletY, directionX, directionY);
+        bullet.flag |= FLAG_UPDATED;
         map.addObject(bullet);
     }
 
@@ -243,6 +246,10 @@ public class Tank extends GameObject {
                     }
                 }
             }
+        }
+
+        if(health <= 0) {
+            map.removeObject(this);
         }
     }
 

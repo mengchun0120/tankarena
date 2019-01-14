@@ -10,7 +10,7 @@ public class BulletTemplate {
     public final float radius = 7.0f;
     public final float collisionRadius = 4.94f;
     public final float[] speed = {
-            300f, 100f
+            300f, 300f
     };
 
     public final float[][] fillColor = {

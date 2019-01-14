@@ -71,6 +71,8 @@ public class Map {
 
                     if(side == 0) {
                         player = tank;
+                    } else {
+                        tank.firing = true;
                     }
 
                     addObject(tank);
