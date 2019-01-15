@@ -277,42 +277,31 @@ public class Tank extends GameObject {
         float deltaY = map.player.position[1] - position[1];
         float absDeltaX = Math.abs(deltaX);
         float absDeltaY = Math.abs(deltaY);
-        float targetBoundary = template.halfBreath + Bullet.template.radius;
 
-        if(absDeltaX < targetBoundary || absDeltaY < targetBoundary) {
+        boolean horizontalInRange = absDeltaX < template.halfBreath;
+        boolean verticalInRange = absDeltaY < template.halfBreath;
+        boolean chooseHorizontal;
+
+        if(horizontalInRange || verticalInRange) {
+            moving = false;
+            firing = true;
+
+            if(horizontalInRange && verticalInRange) {
+                chooseHorizontal = random.nextBoolean();
+            } else {
+                chooseHorizontal = verticalInRange;
+            }
 
         } else {
-
+            moving = true;
+            firing = false;
+            chooseHorizontal = random.nextBoolean();
         }
 
-        if(absDeltaX >= absDeltaY) {
-            if(absDeltaY < targetBoundary) {
-                firing = true;
-                direction = deltaX >= 0 ? DriveWheel.RIGHT : DriveWheel.LEFT;
-                moving = false;
-            } else if(deltaY <= -targetBoundary) {
-                firing = false;
-                direction = DriveWheel.DOWN;
-                moving = true;
-            } else {
-                firing = false;
-                direction = DriveWheel.UP;
-                moving = true;
-            }
+        if(chooseHorizontal) {
+            direction = deltaX >= 0 ? DriveWheel.RIGHT : DriveWheel.LEFT;
         } else {
-            if(absDeltaX < targetBoundary) {
-                firing = true;
-                direction = deltaY >= 0 ? DriveWheel.UP : DriveWheel.DOWN;
-                moving = false;
-            } else if(deltaX <= -targetBoundary) {
-                firing = false;
-                direction = DriveWheel.LEFT;
-                moving = true;
-            } else {
-                firing = false;
-                direction = DriveWheel.RIGHT;
-                moving = true;
-            }
+            direction = deltaY >= 0 ? DriveWheel.UP : DriveWheel.DOWN;
         }
     }
 }

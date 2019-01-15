@@ -84,6 +84,8 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
         timeDeltaCalculator.start();
 
         setOnTouchListener(this);
+
+        running = true;
     }
 
     @Override
@@ -95,9 +97,11 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
     public void onDrawFrame(GL10 gl10) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
-        float timeDelta = timeDeltaCalculator.curTimeDelta();
-
-        map.update(timeDelta);
+        if(running) {
+            float timeDelta = timeDeltaCalculator.curTimeDelta();
+            map.update(timeDelta);
+            running = map.player.health > 0;
+        }
 
         map.draw(simpleShaderProgram);
 
@@ -110,6 +114,10 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
 
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
+        if(!running) {
+            return false;
+        }
+
         switch (motionEvent.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
             case MotionEvent.ACTION_POINTER_DOWN: {

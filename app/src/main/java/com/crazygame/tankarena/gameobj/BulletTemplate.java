@@ -24,7 +24,7 @@ public class BulletTemplate {
     };
 
     public final int[] power = {
-            3, 1
+            1, 1
     };
 
     public final Circle circle;
