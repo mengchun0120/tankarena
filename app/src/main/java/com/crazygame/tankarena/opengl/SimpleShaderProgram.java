@@ -21,6 +21,12 @@ public class SimpleShaderProgram extends ShaderProgram {
     public final int viewportSizeLocation;
     public final int colorLocation;
     public final int positionLocation;
+    public final int useTimeLocation;
+    public final int directionLocation;
+    public final int speedLocation;
+    public final int curTimeLocation;
+    public final int durationLocation;
+    public final int timeColorLocation;
 
     public SimpleShaderProgram(Context context) {
         super(context, R.raw.simple_vertex_shader, R.raw.simple_fragment_shader);
@@ -37,6 +43,12 @@ public class SimpleShaderProgram extends ShaderProgram {
         viewportSizeLocation = GLES20.glGetUniformLocation(program, "viewportSize");
         colorLocation = GLES20.glGetUniformLocation(program, "color");
         positionLocation = GLES20.glGetAttribLocation(program, "position");
+        useTimeLocation = GLES20.glGetUniformLocation(program, "useTime");
+        directionLocation = GLES20.glGetAttribLocation(program, "direction");
+        speedLocation = GLES20.glGetAttribLocation(program, "speed");
+        curTimeLocation = GLES20.glGetAttribLocation(program, "curTime");
+        durationLocation = GLES20.glGetUniformLocation(program, "duration");
+        timeColorLocation = GLES20.glGetUniformLocation(program, "timeColor");
     }
 
     public void setViewportOrigin(float[] viewportOrigin, float[] screenCenter) {
@@ -73,5 +85,10 @@ public class SimpleShaderProgram extends ShaderProgram {
     public void setPosition(VertexBuffer vertexBuffer, int offset, int stride) {
         vertexBuffer.setVertexAttributePointer(offset, positionLocation,
                 POSITION_COMPONENT_COUNT, stride);
+    }
+
+    public void setTimeRelated(VertexBuffer directionBuffer, VertexBuffer speedBuffer,
+                               float curTime) {
+
     }
 }
