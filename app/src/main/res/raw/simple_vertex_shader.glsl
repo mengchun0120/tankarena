@@ -34,6 +34,7 @@ void main() {
 
     } else {
         pos = objRef + speed * curTime * direction;
+        gl_PointSize = 3.0;
     }
 
     if(relativeToViewportOrigin) {

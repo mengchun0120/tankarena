@@ -9,6 +9,8 @@ import android.view.View;
 
 import com.crazygame.tankarena.controllers.DriveWheel;
 import com.crazygame.tankarena.controllers.FireButton;
+import com.crazygame.tankarena.gameobj.Explosion;
+import com.crazygame.tankarena.gameobj.ExplosionTemplate;
 import com.crazygame.tankarena.gameobj.LeftPanel;
 import com.crazygame.tankarena.gameobj.Map;
 import com.crazygame.tankarena.gameobj.RightPanel;
@@ -60,6 +62,8 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
 
     @Override
     public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
+        ExplosionTemplate.initTemplates(context);
+
         GLES20.glClearColor(1f, 1f, 1f, 1f);
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
@@ -74,6 +78,9 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
         fireButton = new FireButton(viewportSize[0]/2f - 180f,
                 -viewportSize[1]/2f + 180f);
         map = new Map(this, R.raw.map1);
+
+        Explosion explosion = new Explosion(1, 200f, 200f);
+        map.addObject(explosion);
 
         float panelWidth = (viewportSize[0] - map.width) / 2f;
         leftPanel = new LeftPanel(-(map.width + panelWidth) / 2f, 0f, panelWidth,

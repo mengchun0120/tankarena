@@ -2,6 +2,7 @@ package com.crazygame.tankarena.opengl;
 
 import android.content.Context;
 import android.opengl.GLES20;
+import android.util.Log;
 
 import com.crazygame.tankarena.R;
 import com.crazygame.tankarena.data.VertexBuffer;
@@ -46,7 +47,7 @@ public class SimpleShaderProgram extends ShaderProgram {
         useTimeLocation = GLES20.glGetUniformLocation(program, "useTime");
         directionLocation = GLES20.glGetAttribLocation(program, "direction");
         speedLocation = GLES20.glGetAttribLocation(program, "speed");
-        curTimeLocation = GLES20.glGetAttribLocation(program, "curTime");
+        curTimeLocation = GLES20.glGetUniformLocation(program, "curTime");
         durationLocation = GLES20.glGetUniformLocation(program, "duration");
         timeColorLocation = GLES20.glGetUniformLocation(program, "timeColor");
     }
@@ -87,8 +88,19 @@ public class SimpleShaderProgram extends ShaderProgram {
                 POSITION_COMPONENT_COUNT, stride);
     }
 
-    public void setTimeRelated(VertexBuffer directionBuffer, VertexBuffer speedBuffer,
-                               float curTime) {
+    public void setUseTime(boolean useTime) {
+        GLES20.glUniform1i(useTimeLocation, useTime ? 1 : 0);
+    }
 
+    public void setTimeRelated(VertexBuffer directionBuffer, VertexBuffer speedBuffer,
+                               float[] objRef, float[] timeColor, float curTime, float duration) {
+        GLES20.glUniform1f(curTimeLocation, curTime);
+        GLES20.glUniform1f(durationLocation, duration);
+        GLES20.glUniform2fv(objRefLocation, 1, objRef, 0);
+        GLES20.glUniform3fv(timeColorLocation, 1, timeColor, 0);
+        directionBuffer.setVertexAttributePointer(0, directionLocation,
+                POSITION_COMPONENT_COUNT, 0);
+        speedBuffer.setVertexAttributePointer(0, speedLocation,
+                1, 0);
     }
 }

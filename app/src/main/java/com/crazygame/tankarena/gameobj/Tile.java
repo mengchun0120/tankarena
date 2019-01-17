@@ -19,6 +19,7 @@ public class Tile extends GameObject {
 
     @Override
     public void draw(SimpleShaderProgram simpleShaderProgram) {
+        simpleShaderProgram.setUseTime(false);
         template.draw(simpleShaderProgram, position);
         flag |= FLAG_DRAWN;
     }

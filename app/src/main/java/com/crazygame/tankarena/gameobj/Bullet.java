@@ -53,6 +53,7 @@ public class Bullet extends GameObject {
 
     @Override
     public void draw(SimpleShaderProgram simpleShaderProgram) {
+        simpleShaderProgram.setUseTime(false);
         template.draw(simpleShaderProgram, side, position);
         flag |= FLAG_DRAWN;
     }
@@ -146,10 +147,22 @@ public class Bullet extends GameObject {
             }
         }
 
+        if(collide) {
+            Explosion explosion = new Explosion(0, position[0], position[1]);
+            map.addObject(explosion);
+        }
+
         return collide;
     }
 
     private boolean collideWith(GameObject obj) {
+        if(obj instanceof Tank) {
+            Tank tank = (Tank)obj;
+            if(tank.side == side) {
+                return false;
+            }
+        }
+
         return (obj.rightCollisionBound() - leftCollisionBound()) > 0 &&
                (rightCollisionBound() - obj.leftCollisionBound()) > 0 &&
                (obj.topCollisionBound() - bottomCollisionBound()) > 0 &&

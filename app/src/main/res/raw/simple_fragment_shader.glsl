@@ -10,6 +10,6 @@ void main() {
     if(!useTime) {
         gl_FragColor = color;
     } else {
-        gl_FragColor = vec4(timeColor, 1.0 - curTime / duration);
+        gl_FragColor = vec4(timeColor, 1.0 - curTime/duration);
     }
 }

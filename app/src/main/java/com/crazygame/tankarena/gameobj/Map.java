@@ -138,6 +138,9 @@ public class Map {
                         } else if(obj instanceof Bullet) {
                             Bullet bullet = (Bullet) obj;
                             bullet.update(this, timeDelta);
+                        } else if(obj instanceof Explosion) {
+                            Explosion explosion = (Explosion)obj;
+                            explosion.update(this, timeDelta);
                         }
                     }
                 }

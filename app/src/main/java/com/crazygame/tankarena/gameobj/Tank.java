@@ -31,6 +31,7 @@ public class Tank extends GameObject {
 
     @Override
     public void draw(SimpleShaderProgram simpleShaderProgram) {
+        simpleShaderProgram.setUseTime(false);
         template.draw(simpleShaderProgram, side, position, direction);
         flag |= FLAG_DRAWN;
     }
