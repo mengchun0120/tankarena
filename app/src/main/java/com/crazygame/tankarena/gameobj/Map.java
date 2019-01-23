@@ -19,8 +19,6 @@ public class Map {
     public final float width = numBlocksX * blockBreath;
     public final float height;
     public final MapItem[][] items;
-    private final MapItemPool mapItemPool = new MapItemPool(1000);
-    private final MapItemToDeletePool itemToDeletePool = new MapItemToDeletePool(500);
     private MapItemToDelete firstItemToDelete = null;
     public final GameView gameView;
     public final float[] viewportOrigin = {0f, 0f};
@@ -123,8 +121,8 @@ public class Map {
         player.update(this, timeDelta);
         updateViewportOrigin();
 
-        int bottomRow = crampRow(getRow(viewportOrigin[1] - blockBreath));
-        int topRow = crampRow(getRow(viewportOrigin[1] + gameView.viewportSize[1] + blockBreath));
+        int bottomRow = crampRow(getRow(viewportOrigin[1]) - 1);
+        int topRow = crampRow(getRow(viewportOrigin[1] + gameView.viewportSize[1]) + 1);
 
         clearFlags(bottomRow, topRow, 0, numBlocksX-1, 0);
         for(int row = bottomRow; row <= topRow; ++row) {
@@ -150,27 +148,6 @@ public class Map {
         deleteMapItems();
     }
 
-    public String getObjectStr(int row, int col) {
-        builder.delete(0, builder.length());
-        builder.append(row);
-        builder.append(" ");
-        builder.append(col);
-        for(MapItem i = items[row][col]; i != null; i = i.next) {
-            builder.append(" " + i.idStr + ":" + i.gameObject.idStr);
-        }
-        return builder.toString();
-    }
-
-    public void logAllMap() {
-        for(int row = 0; row < numBlocksY; ++row) {
-            for(int col = 0; col < numBlocksX; ++col) {
-                if(items[row][col] != null) {
-                    FileLog.log("    " + getObjectStr(row, col));
-                }
-            }
-        }
-    }
-
     public void addObject(GameObject obj) {
         final int bottomRow = crampRow(getRow(obj.bottomBound()));
         final int topRow = crampRow(getRow(obj.topBound()));
@@ -185,8 +162,10 @@ public class Map {
     }
 
     public void addObject(GameObject obj, int row, int col) {
-        MapItem item = mapItemPool.alloc(obj);
+        MapItem item = Pool.mapItemPool.alloc();
+        item.gameObject = obj;
         item.next = items[row][col];
+        item.prev = null;
         if(items[row][col] != null) {
             items[row][col].prev = item;
         }
@@ -204,7 +183,10 @@ public class Map {
 
         if(item != null) {
             item.gameObject = null;
-            MapItemToDelete itemToDelete = itemToDeletePool.alloc(item, row, col);
+            MapItemToDelete itemToDelete = Pool.mapItemToDeletePool.alloc();
+            itemToDelete.item = item;
+            itemToDelete.row = row;
+            itemToDelete.col = col;
             itemToDelete.next = firstItemToDelete;
             firstItemToDelete = itemToDelete;
         }
@@ -323,8 +305,13 @@ public class Map {
                 item.next.prev = item.prev;
             }
 
-            mapItemPool.free(item);
-            itemToDeletePool.free(firstItemToDelete);
+            item.prev = item.next = null;
+            Pool.mapItemPool.free(item);
+
+            firstItemToDelete.item = null;
+            firstItemToDelete.row = firstItemToDelete.col = -1;
+            firstItemToDelete.next = null;
+            Pool.mapItemToDeletePool.free(firstItemToDelete);
 
             firstItemToDelete = nextItemToDelete;
         }

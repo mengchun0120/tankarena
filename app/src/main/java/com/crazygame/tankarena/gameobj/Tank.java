@@ -22,7 +22,6 @@ public class Tank extends GameObject {
     private Random random = new Random();
 
     public Tank(int side, int direction, float x, float y) {
-        super("t" +(count++));
         this.side = side;
         this.direction = direction;
         position[0] = x;
@@ -146,7 +145,12 @@ public class Tank extends GameObject {
         float bulletY = position[1] + template.firingPoint[0] * directionY +
                 template.firingPoint[1] * directionX;
 
-        Bullet bullet = new Bullet(side, bulletX, bulletY, directionX, directionY);
+        Bullet bullet = Pool.bulletPool.alloc();
+        bullet.direction[0] = directionX;
+        bullet.direction[1] = directionY;
+        bullet.position[0] = bulletX;
+        bullet.position[1] = bulletY;
+        bullet.side = side;
         bullet.flag |= FLAG_UPDATED;
         map.addObject(bullet);
     }
@@ -255,6 +259,7 @@ public class Tank extends GameObject {
                         if(bullet.side != side) {
                             health -= bullet.power();
                             map.removeObject(bullet);
+                            Pool.bulletPool.free(bullet);
                         }
                     }
                 }
@@ -263,6 +268,12 @@ public class Tank extends GameObject {
 
         if(health <= 0) {
             map.removeObject(this);
+            Explosion explosion = Pool.explosionPool.alloc();
+            explosion.template_id = 1;
+            explosion.curTime = 0f;
+            explosion.position[0] = position[0];
+            explosion.position[1] = position[1];
+            map.addObject(explosion);
         }
     }
 

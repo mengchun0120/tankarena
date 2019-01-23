@@ -9,18 +9,8 @@ import com.crazygame.tankarena.utils.FileLog;
 public class Bullet extends GameObject {
     public final static BulletTemplate template = new BulletTemplate();
 
-    public final int side;
+    public int side;
     public final float[] direction = new float[SimpleShaderProgram.POSITION_COMPONENT_COUNT];
-    private static int count = 0;
-
-    public Bullet(int side, float x, float y, float directionX, float directionY) {
-        super("b" + (count++));
-        this.side = side;
-        position[0] = x;
-        position[1] = y;
-        direction[0] = directionX;
-        direction[1] = directionY;
-    }
 
     public void update(Map map, float timeDelta) {
         float moveDistance = template.speed[side] * timeDelta;
@@ -46,6 +36,7 @@ public class Bullet extends GameObject {
 
         if(outOfBound(map) || checkCollision(map)) {
             map.removeObject(this, newBottomRow, newTopRow, newLeftCol, newRightCol);
+            Pool.bulletPool.free(this);
         } else {
             flag |= FLAG_UPDATED;
         }
@@ -136,6 +127,12 @@ public class Bullet extends GameObject {
                                     tank.health -= template.power[side];
                                     if(tank.health <= 0) {
                                         map.removeObject(tank);
+                                        Explosion explosion = Pool.explosionPool.alloc();
+                                        explosion.template_id = 1;
+                                        explosion.curTime = 0f;
+                                        explosion.position[0] = position[0];
+                                        explosion.position[1] = position[1];
+                                        map.addObject(explosion);
                                     }
                                 }
                             }
@@ -148,7 +145,11 @@ public class Bullet extends GameObject {
         }
 
         if(collide) {
-            Explosion explosion = new Explosion(0, position[0], position[1]);
+            Explosion explosion = Pool.explosionPool.alloc();
+            explosion.template_id = 0;
+            explosion.curTime = 0f;
+            explosion.position[0] = position[0];
+            explosion.position[1] = position[1];
             map.addObject(explosion);
         }
 

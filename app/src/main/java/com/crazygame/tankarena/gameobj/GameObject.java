@@ -9,11 +9,6 @@ public abstract class GameObject {
 
     public final float[] position = new float[SimpleShaderProgram.POSITION_COMPONENT_COUNT];
     public int flag = 0;
-    public final String idStr;
-
-    public GameObject(String idStr) {
-        this.idStr = idStr;
-    }
 
     public abstract void draw(SimpleShaderProgram simpleShaderProgram);
 

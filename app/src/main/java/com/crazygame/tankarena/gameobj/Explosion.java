@@ -7,16 +7,8 @@ import com.crazygame.tankarena.opengl.SimpleShaderProgram;
 
 public class Explosion extends GameObject {
     private static int count = 0;
-    public final int template_id;
+    public int template_id;
     public float curTime;
-
-    public Explosion(int template_id, float x, float y) {
-        super("e" + (count++));
-        this.template_id = template_id;
-        position[0] = x;
-        position[1] = y;
-        curTime = 0f;
-    }
 
     @Override
     public void draw(SimpleShaderProgram simpleShaderProgram) {
@@ -33,6 +25,7 @@ public class Explosion extends GameObject {
         curTime += timeDelta;
         if(curTime >= ExplosionTemplate.templates[template_id].duration) {
             map.removeObject(this);
+            Pool.explosionPool.free(this);
         } else {
             flag |= FLAG_UPDATED;
         }

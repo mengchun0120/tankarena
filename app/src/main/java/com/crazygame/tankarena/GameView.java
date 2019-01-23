@@ -79,9 +79,6 @@ public class GameView extends GLSurfaceView implements GLSurfaceView.Renderer,
                 -viewportSize[1]/2f + 180f);
         map = new Map(this, R.raw.map1);
 
-        Explosion explosion = new Explosion(1, 200f, 200f);
-        map.addObject(explosion);
-
         float panelWidth = (viewportSize[0] - map.width) / 2f;
         leftPanel = new LeftPanel(-(map.width + panelWidth) / 2f, 0f, panelWidth,
                 viewportSize[1]);
